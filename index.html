@@ -52,7 +52,7 @@
         </div>
         <div>
           <h1 class="font-bold text-lg leading-tight">Control Digital de Folios</h1>
-          <p class="text-xs text-slate-400">Dirección de Catastro y Administración Municipal</p>
+          <p class="text-xs text-slate-400">Dirección de Catastro</p>
         </div>
       </div>
 
@@ -96,7 +96,7 @@
           <span>Tachar Siguiente Disponible</span>
         </button>
         <div class="relative">
-          <input type="number" id="searchInput" placeholder="Buscar folio..." min="1" max="400" onkeyup="searchFolio(event)" class="w-36 pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white">
+          <input type="number" id="searchInput" placeholder="Buscar folio..." min="1" max="4000" onkeyup="searchFolio(event)" class="w-36 pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white">
           <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
         </div>
       </div>
@@ -107,14 +107,14 @@
       <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
         <div>
           <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Folios</p>
-          <p class="text-2xl font-black text-slate-800">400</p>
+          <p class="text-2xl font-black text-slate-800">4000</p>
         </div>
         <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600"><i class="fa-solid fa-list-ol"></i></div>
       </div>
       <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
         <div>
           <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Disponibles</p>
-          <p id="statAvailable" class="text-2xl font-black text-emerald-600">400</p>
+          <p id="statAvailable" class="text-2xl font-black text-emerald-600">4000</p>
         </div>
         <div class="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600"><i class="fa-solid fa-check"></i></div>
       </div>
@@ -152,7 +152,7 @@
         <div>COL 6</div><div>COL 7</div><div>COL 8</div><div>COL 9</div><div>COL 10</div>
       </div>
 
-      <!-- Grilla de 400 Folios -->
+      <!-- Grilla de 4000 Folios -->
       <div id="folioGrid" class="cell-grid pt-1"></div>
     </div>
 
@@ -216,7 +216,7 @@
         <p class="text-xs text-slate-500 mt-1">Ingresa el PIN de Administrador para quitar el tachado del <strong id="unstrikeFolioNum" class="text-slate-800"></strong>.</p>
       </div>
       <div>
-        <input type="password" id="adminPinInput" placeholder="PIN de Administrador (1234)" class="w-full text-center tracking-widest text-lg font-bold py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        <input type="password" id="adminPinInput" placeholder="PIN de Administrador " class="w-full text-center tracking-widest text-lg font-bold py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
       </div>
       <div class="flex space-x-2 pt-2">
         <button onclick="closeUnstrikeModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors">Cancelar</button>
@@ -283,7 +283,7 @@
       const currentData = window.dataStore[window.currentTab] || {};
       let strikedCount = 0;
 
-      for (let i = 1; i <= 400; i++) {
+      for (let i = 1; i <= 4000; i++) {
         const isStriked = !!currentData[i];
         if (isStriked) strikedCount++;
 
@@ -301,8 +301,8 @@
       }
 
       // Actualizar estadísticas
-      const availableCount = 400 - strikedCount;
-      const progress = ((strikedCount / 400) * 100).toFixed(1);
+      const availableCount = 4000 - strikedCount;
+      const progress = ((strikedCount / 4000) * 100).toFixed(1);
 
       document.getElementById('statAvailable').textContent = availableCount;
       document.getElementById('statStriked').textContent = strikedCount;
@@ -379,7 +379,7 @@
 
     function confirmUnstrike() {
       const pin = document.getElementById('adminPinInput').value;
-      if (pin !== '1234') {
+      if (pin !== '0228') {
         alert('PIN de Administrador incorrecto.');
         return;
       }
@@ -404,7 +404,7 @@
 
     function strikethroughNextAvailable() {
       const currentData = window.dataStore[window.currentTab] || {};
-      for (let i = 1; i <= 400; i++) {
+      for (let i = 1; i <= 4000; i++) {
         if (!currentData[i]) {
           handleFolioClick(i, false);
           break;
@@ -414,7 +414,7 @@
 
     function searchFolio(event) {
       const query = document.getElementById('searchInput').value;
-      if (!query || query < 1 || query > 400) return;
+      if (!query || query < 1 || query > 4000) return;
 
       const targetBox = document.getElementById(`folio-box-${query}`);
       if (targetBox) {
