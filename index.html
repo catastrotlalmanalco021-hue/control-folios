@@ -4,20 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Control Digital de Folios - Traslados y Oficios</title>
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     .cell-grid {
       display: grid;
       grid-template-columns: repeat(10, minmax(0, 1fr));
       gap: 6px;
-    }
-    @media (max-width: 640px) {
-      .cell-grid {
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-      }
     }
     .folio-box {
       user-select: none;
@@ -27,13 +20,18 @@
       background-color: #fee2e2 !important;
       color: #991b1b !important;
       border-color: #fca5a5 !important;
-      position: relative;
     }
     .folio-box.striked span.num {
       text-decoration: line-through;
       text-decoration-thickness: 2px;
       text-decoration-color: #dc2626;
-      opacity: 0.65;
+      opacity: 0.6;
+    }
+    .folio-box.selected-multi {
+      background-color: #dbeafe !important;
+      border-color: #3b82f6 !important;
+      color: #1e40af !important;
+      box-shadow: 0 0 0 2px #3b82f6;
     }
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
@@ -48,46 +46,35 @@
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col pb-20">
 
   <!-- Header principal -->
-  <header class="bg-slate-900 text-white shadow-md border-b border-slate-800 sticky top-0 z-30">
+  <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
     <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
-      
-      <!-- Marca y Título -->
       <div class="flex items-center space-x-3">
-        <div class="bg-blue-600 p-2.5 rounded-xl shadow-md">
+        <div class="bg-blue-600 p-2.5 rounded-lg shadow-inner">
           <i class="fa-solid fa-stamp text-xl text-white"></i>
         </div>
         <div>
-          <h1 class="font-bold text-lg leading-tight flex items-center gap-2">
-            Control Digital de Folios
-            <span class="bg-blue-500/20 text-blue-300 text-xs px-2 py-0.5 rounded border border-blue-400/30">v2.0 Sync</span>
-          </h1>
+          <h1 class="font-bold text-lg leading-tight">Control Digital de Folios</h1>
           <p class="text-xs text-slate-400">Dirección de Catastro y Administración Municipal</p>
         </div>
       </div>
 
-      <!-- Selector de Operadores & Botón Agregar -->
-      <div class="flex items-center space-x-2 bg-slate-800 p-1.5 rounded-xl border border-slate-700 flex-wrap gap-y-2">
-        <div class="flex items-center space-x-2 pl-2">
-          <i class="fa-solid fa-user-gear text-blue-400 text-sm"></i>
-          <span class="text-xs font-semibold text-slate-300">Operador:</span>
-        </div>
-        
-        <select id="operatorSelect" class="bg-slate-900 text-white text-xs font-medium rounded-lg px-3 py-1.5 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-xs">
-          <!-- Cargado dinámicamente desde Firebase -->
+      <!-- Selector de Operador -->
+      <div class="flex items-center space-x-2 bg-slate-800 p-1.5 rounded-lg border border-slate-700">
+        <label class="text-xs font-semibold text-slate-300 pl-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-user-gear text-blue-400"></i> Operador:
+        </label>
+        <select id="operatorSelect" class="bg-slate-900 text-white text-xs font-medium rounded-md px-3 py-1.5 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
         </select>
-
-        <button onclick="openAddOperatorModal()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
-          <i class="fa-solid fa-user-plus text-xs"></i>
-          <span>➕ Operador</span>
+        <button onclick="openAddOperatorModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2.5 py-1.5 rounded-md font-bold transition-colors" title="Agregar nuevo operador">
+          <i class="fa-solid fa-user-plus"></i>
         </button>
       </div>
 
-      <!-- Badge de Estado de Conexión -->
       <div class="flex items-center space-x-2">
-        <span id="syncBadge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm">
+        <span id="syncBadge" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
           <span class="w-2 h-2 mr-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
           Firebase En Vivo
         </span>
@@ -95,121 +82,114 @@
     </div>
   </header>
 
-  <!-- Panel Principal -->
+  <!-- Panel de navegación e interacción -->
   <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-4">
     
-    <!-- Barra de Navegación entre Módulos y Acciones -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-4">
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-4">
       
-      <!-- Pestañas Traslados / Oficios -->
-      <div class="flex items-center space-x-1 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
-        <button id="tabTraslados" onclick="switchTab('traslados')" class="px-5 py-2 rounded-lg font-bold text-sm transition-all bg-white text-blue-700 shadow-sm border border-slate-200 flex items-center gap-2">
-          <i class="fa-solid fa-file-contract"></i>
-          <span>Traslados de Dominio</span>
+      <!-- Pestañas -->
+      <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-lg">
+        <button id="tabTraslados" onclick="switchTab('traslados')" class="px-5 py-2 rounded-md font-semibold text-sm transition-all bg-white text-blue-700 shadow-sm border border-slate-200">
+          <i class="fa-solid fa-file-contract mr-2"></i>Traslados de Dominio
         </button>
-        <button id="tabOficios" onclick="switchTab('oficios')" class="px-5 py-2 rounded-lg font-bold text-sm transition-all text-slate-600 hover:text-slate-900 flex items-center gap-2">
-          <i class="fa-solid fa-envelope-open-text"></i>
-          <span>Oficios</span>
+        <button id="tabOficios" onclick="switchTab('oficios')" class="px-5 py-2 rounded-md font-semibold text-sm transition-all text-slate-600 hover:text-slate-900">
+          <i class="fa-solid fa-envelope-open-text mr-2"></i>Oficios
         </button>
       </div>
 
-      <!-- Controles de Expansión de Folios y Búsqueda -->
-      <div class="flex items-center flex-wrap gap-2">
-        
-        <!-- Botones de incremento dinámico -->
-        <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 space-x-1">
-          <span class="text-xs font-semibold text-slate-500 px-2 flex items-center gap-1">
-            <i class="fa-solid fa-up-right-and-down-left-from-center text-blue-600"></i> Ampliar:
-          </span>
-          <button onclick="increaseFolioLimit(50)" class="bg-white hover:bg-blue-50 text-blue-700 font-bold text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-2xs transition-all">+50</button>
-          <button onclick="increaseFolioLimit(100)" class="bg-white hover:bg-blue-50 text-blue-700 font-bold text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-2xs transition-all">+100</button>
-          <button onclick="openCustomLimitModal()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg shadow-2xs transition-all flex items-center gap-1">
-            <i class="fa-solid fa-sliders text-xs"></i> Límite
-          </button>
-        </div>
+      <!-- Acciones Rápidas -->
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Tachar Rango (Ejemplo 1 al 200) -->
+        <button onclick="openRangeModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+          <i class="fa-solid fa-list-check"></i>
+          <span>Tachar Rango (ej. 1 al 200)</span>
+        </button>
 
-        <!-- Botón Tachar Siguiente -->
-        <button onclick="strikethroughNextAvailable()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center space-x-2">
-          <i class="fa-solid fa-bolt text-yellow-300 animate-bounce"></i>
-          <span>Tachar Siguiente Disponible</span>
+        <!-- Activar Selección Múltiple Manual -->
+        <button id="btnMultiMode" onclick="toggleMultiMode()" class="bg-slate-700 hover:bg-slate-800 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+          <i class="fa-solid fa-object-group"></i>
+          <span id="btnMultiText">Modo Seleccionar Varios</span>
         </button>
 
         <!-- Buscador -->
         <div class="relative">
-          <input type="number" id="searchInput" placeholder="Buscar folio..." min="1" onkeyup="searchFolio(event)" class="w-36 pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
-          <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+          <input type="number" id="searchInput" placeholder="Buscar folio..." min="1" onkeyup="searchFolio(event)" class="w-32 pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white">
+          <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-slate-400 text-xs"></i>
         </div>
       </div>
     </div>
 
-    <!-- Tarjetas de Métricas -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+    <!-- Métrica de Folios + Control de Límite -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
         <div>
-          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Límite Actual</p>
+          <div class="flex items-center gap-2">
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Folios</p>
+            <button onclick="openExpandModal()" class="text-[10px] bg-blue-50 text-blue-600 font-bold px-1.5 py-0.5 rounded hover:bg-blue-100" title="Expandir folios">+ Folios</button>
+          </div>
           <p id="statTotal" class="text-2xl font-black text-slate-800">400</p>
         </div>
-        <div class="w-11 h-11 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600 text-lg"><i class="fa-solid fa-list-ol"></i></div>
+        <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600"><i class="fa-solid fa-list-ol"></i></div>
       </div>
 
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
         <div>
           <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Disponibles</p>
           <p id="statAvailable" class="text-2xl font-black text-emerald-600">400</p>
         </div>
-        <div class="w-11 h-11 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 text-lg"><i class="fa-solid fa-check"></i></div>
+        <div class="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600"><i class="fa-solid fa-check"></i></div>
       </div>
 
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
         <div>
           <p class="text-xs font-semibold text-rose-600 uppercase tracking-wider">Tachados</p>
           <p id="statStriked" class="text-2xl font-black text-rose-600">0</p>
         </div>
-        <div class="w-11 h-11 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600 text-lg"><i class="fa-solid fa-strikethrough"></i></div>
+        <div class="w-10 h-10 bg-rose-50 rounded-lg flex items-center justify-center text-rose-600"><i class="fa-solid fa-strikethrough"></i></div>
       </div>
 
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
         <div>
           <p class="text-xs font-semibold text-blue-600 uppercase tracking-wider">Avance</p>
           <p id="statProgress" class="text-2xl font-black text-blue-600">0.0%</p>
         </div>
-        <div class="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 text-lg"><i class="fa-solid fa-chart-pie"></i></div>
+        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600"><i class="fa-solid fa-chart-pie"></i></div>
       </div>
     </div>
 
-    <!-- Matriz Cuadrícula de Folios -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
-      <div class="flex flex-wrap items-center justify-between border-b border-slate-100 pb-3 gap-2">
+    <!-- Contenedor Cuadrícula de Folios -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
         <h2 id="sectionTitle" class="font-bold text-slate-800 text-base flex items-center gap-2">
-          <i class="fa-solid fa-table-cells text-blue-600"></i> Matriz Digital de Traslados de Dominio (1 - 400)
+          <i class="fa-solid fa-table-cells text-blue-600"></i> Matriz Digital de Traslados de Dominio
         </h2>
         <div class="flex items-center space-x-4 text-xs font-medium text-slate-500">
-          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-md bg-emerald-100 border border-emerald-300"></span> Disponible</span>
-          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-md bg-rose-100 border border-rose-300"></span> Tachado</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-100 border border-emerald-300"></span> Disponible</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-rose-100 border border-rose-300"></span> Tachado</span>
         </div>
       </div>
 
-      <!-- Cabecera de 10 Columnas -->
-      <div class="hidden sm:grid grid-cols-10 gap-1.5 text-center text-xs font-bold text-slate-500 bg-slate-100 py-2 rounded-xl border border-slate-200">
+      <!-- Cabecera 10 Cols -->
+      <div class="grid grid-cols-10 gap-1.5 text-center text-xs font-bold text-slate-500 bg-slate-100 py-2 rounded-lg border border-slate-200">
         <div>COL 1</div><div>COL 2</div><div>COL 3</div><div>COL 4</div><div>COL 5</div>
         <div>COL 6</div><div>COL 7</div><div>COL 8</div><div>COL 9</div><div>COL 10</div>
       </div>
 
-      <!-- Grilla Dinámica de Folios -->
+      <!-- Grilla de Folios -->
       <div id="folioGrid" class="cell-grid pt-1"></div>
     </div>
 
     <!-- Bitácora de Auditoría -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-3">
-      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
         <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
           <i class="fa-solid fa-clock-rotate-left text-blue-600"></i> Bitácora de Movimientos
         </h3>
-        <button onclick="exportAuditCSV()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5">
+        <button onclick="exportAuditCSV()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-md border border-slate-300 transition-colors flex items-center gap-1.5">
           <i class="fa-solid fa-file-excel text-emerald-600"></i> Exportar CSV
         </button>
       </div>
-      <div class="max-h-56 overflow-y-auto custom-scrollbar border border-slate-200 rounded-xl">
+      <div class="max-h-48 overflow-y-auto custom-scrollbar border border-slate-200 rounded-lg">
         <table class="w-full text-left text-xs text-slate-600">
           <thead class="bg-slate-50 text-slate-700 font-bold sticky top-0 border-b border-slate-200">
             <tr>
@@ -221,37 +201,110 @@
             </tr>
           </thead>
           <tbody id="auditTableBody" class="divide-y divide-slate-100">
-            <tr><td colspan="5" class="p-4 text-center text-slate-400 italic">No hay registros de movimientos en la base de datos.</td></tr>
+            <tr><td colspan="5" class="p-4 text-center text-slate-400 italic">No hay registros de movimientos.</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </main>
 
-  <!-- ================= MODALES DEL SISTEMA ================= -->
+  <!-- Barra Flotante para Confirmar Selección Múltiple Manual -->
+  <div id="multiFloatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-4 z-40 hidden border border-slate-700">
+    <span class="text-xs font-semibold"><i class="fa-solid fa-check-double text-blue-400 mr-2"></i><span id="multiCountText">0</span> folios seleccionados</span>
+    <button onclick="confirmMultiSelection()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-1.5 rounded-full transition-colors shadow">
+      Tachar Seleccionados
+    </button>
+    <button onclick="cancelMultiMode()" class="text-slate-400 hover:text-white text-xs font-bold">
+      Cancelar
+    </button>
+  </div>
 
-  <!-- 1. Modal Confirmación de Tachar Folio -->
-  <div id="strikeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+  <!-- Modal Tachar Rango (ej. 1 al 200) -->
+  <div id="rangeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+      <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto text-xl">
+        <i class="fa-solid fa-list-check"></i>
+      </div>
+      <div class="text-center">
+        <h3 class="font-bold text-lg text-slate-800">Tachar Rango de Folios</h3>
+        <p class="text-xs text-slate-500 mt-1">Ingresa el rango inicial y final para tachar múltiples folios de golpe.</p>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-[11px] font-bold text-slate-600">Desde el Folio:</label>
+          <input type="number" id="rangeStartInput" value="1" min="1" class="w-full text-center font-bold py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="text-[11px] font-bold text-slate-600">Hasta el Folio:</label>
+          <input type="number" id="rangeEndInput" value="200" min="1" class="w-full text-center font-bold py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none">
+        </div>
+      </div>
+      <div class="flex space-x-2 pt-2">
+        <button onclick="closeRangeModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors">Cancelar</button>
+        <button onclick="confirmRangeStrike()" class="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm">Tachar Rango</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Añadir Operador -->
+  <div id="addOperatorModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+      <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-xl">
+        <i class="fa-solid fa-user-plus"></i>
+      </div>
+      <div class="text-center">
+        <h3 class="font-bold text-lg text-slate-800">Agregar Operador</h3>
+        <p class="text-xs text-slate-500 mt-1">Escribe el nombre completo y cargo para incluirlo en la lista.</p>
+      </div>
+      <div>
+        <input type="text" id="newOperatorNameInput" placeholder="Ej. MARIA LOPEZ (Aux. Admin 4)" class="w-full text-sm font-medium p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+      </div>
+      <div class="flex space-x-2 pt-2">
+        <button onclick="closeAddOperatorModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors">Cancelar</button>
+        <button onclick="confirmAddOperator()" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Expandir Cantidad de Folios -->
+  <div id="expandModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+      <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl">
+        <i class="fa-solid fa-arrow-up-right-dots"></i>
+      </div>
+      <div class="text-center">
+        <h3 class="font-bold text-lg text-slate-800">Aumentar Total de Folios</h3>
+        <p class="text-xs text-slate-500 mt-1">Define el nuevo límite máximo de folios para esta sección.</p>
+      </div>
+      <div>
+        <input type="number" id="customLimitInput" placeholder="Ej. 500, 600, 1000..." min="100" class="w-full text-center font-bold text-lg p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+      </div>
+      <div class="flex space-x-2 pt-2">
+        <button onclick="closeExpandModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors">Cancelar</button>
+        <button onclick="confirmExpandLimit()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm">Actualizar Límite</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Confirmación Individual -->
+  <div id="strikeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100">
       <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-xl">
         <i class="fa-solid fa-strikethrough"></i>
       </div>
       <div class="text-center">
         <h3 class="font-bold text-lg text-slate-800">Confirmar Tachado</h3>
-        <p class="text-xs text-slate-500 mt-1">¿Deseas tachar digitalmente el <strong id="modalFolioNum" class="text-rose-600 font-black"></strong> en <span id="modalTabName" class="font-bold"></span>?</p>
-      </div>
-      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
-        <p><strong>Operador:</strong> <span id="modalOperatorName" class="font-semibold text-slate-800"></span></p>
+        <p class="text-xs text-slate-500 mt-1">¿Deseas tachar el <strong id="modalFolioNum" class="text-rose-600 font-black"></strong>?</p>
       </div>
       <div class="flex space-x-2 pt-2">
-        <button onclick="closeStrikeModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors">Cancelar</button>
-        <button onclick="confirmStrike()" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl text-xs transition-colors shadow-sm">Sí, Tachar</button>
+        <button onclick="closeStrikeModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors">Cancelar</button>
+        <button onclick="confirmStrike()" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm">Sí, Tachar</button>
       </div>
     </div>
   </div>
 
-  <!-- 2. Modal Liberar Folio con PIN (1234) -->
-  <div id="unstrikeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+  <!-- Modal Liberar Folio (PIN) -->
+  <div id="unstrikeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100">
       <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-xl">
         <i class="fa-solid fa-key"></i>
@@ -261,81 +314,20 @@
         <p class="text-xs text-slate-500 mt-1">Ingresa el PIN de Administrador para quitar el tachado del <strong id="unstrikeFolioNum" class="text-slate-800"></strong>.</p>
       </div>
       <div>
-        <input type="password" id="adminPinInput" placeholder="PIN Administrador " class="w-full text-center tracking-widest text-lg font-bold py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        <input type="password" id="adminPinInput" placeholder="PIN de Administrador (1234)" class="w-full text-center tracking-widest text-lg font-bold py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
       </div>
       <div class="flex space-x-2 pt-2">
-        <button onclick="closeUnstrikeModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors">Cancelar</button>
-        <button onclick="confirmUnstrike()" class="flex-1 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs transition-colors shadow-sm">Liberar Folio</button>
+        <button onclick="closeUnstrikeModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors">Cancelar</button>
+        <button onclick="confirmUnstrike()" class="flex-1 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm">Liberar Folio</button>
       </div>
     </div>
   </div>
 
-  <!-- 3. Modal Agregar Operador -->
-  <div id="addOperatorModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100">
-      <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-xl">
-        <i class="fa-solid fa-user-plus"></i>
-      </div>
-      <div class="text-center">
-        <h3 class="font-bold text-lg text-slate-800">Agregar Nuevo Operador</h3>
-        <p class="text-xs text-slate-500 mt-1">Se guardará en Firebase y aparecerá en las 4 computadoras.</p>
-      </div>
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo:</label>
-          <input type="text" id="newOpName" placeholder="Ej. MARÍA LOPEZ" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Cargo / Puesto:</label>
-          <input type="text" id="newOpRole" placeholder="Ej. Auxiliar Administrativo 4" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none">
-        </div>
-      </div>
-      <div class="flex space-x-2 pt-2">
-        <button onclick="closeAddOperatorModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors">Cancelar</button>
-        <button onclick="saveNewOperator()" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition-colors shadow-sm">Guardar Operador</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 4. Modal Límite Personalizado de Folios -->
-  <div id="customLimitModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100">
-      <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-xl">
-        <i class="fa-solid fa-sliders"></i>
-      </div>
-      <div class="text-center">
-        <h3 class="font-bold text-lg text-slate-800">Ajustar Límite de Folios</h3>
-        <p class="text-xs text-slate-500 mt-1">Define el máximo de folios para <strong id="customLimitTabName" class="text-blue-600"></strong>.</p>
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-slate-600 mb-1">Nuevo Total (ej. 500, 600, 1000):</label>
-        <input type="number" id="customLimitInput" min="10" max="10000" placeholder="Ej. 600" class="w-full text-center text-lg font-bold py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
-      </div>
-      <div class="flex space-x-2 pt-2">
-        <button onclick="closeCustomLimitModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors">Cancelar</button>
-        <button onclick="saveCustomLimit()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition-colors shadow-sm">Actualizar Límite</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 5. Modal Notificación Mensaje Generales (Reemplazo de alert) -->
-  <div id="alertModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white rounded-2xl max-w-xs w-full p-5 shadow-2xl space-y-3 border border-slate-100 text-center">
-      <div id="alertModalIcon" class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-lg">
-        <i class="fa-solid fa-circle-info"></i>
-      </div>
-      <h3 id="alertModalTitle" class="font-bold text-base text-slate-800">Mensaje</h3>
-      <p id="alertModalMsg" class="text-xs text-slate-600 leading-relaxed"></p>
-      <button onclick="closeAlertModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl text-xs transition-colors">Entendido</button>
-    </div>
-  </div>
-
-  <!-- Script Firebase ESM -->
+  <!-- Firebase JavaScript SDK v11 ESM -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-    // Credenciales de Firebase de la oficina
     const firebaseConfig = {
       apiKey: "AIzaSyAiWWjL5i6PVGPrWYzCcf7MFvegAv3WKow",
       authDomain: "folios-oficina.firebaseapp.com",
@@ -349,52 +341,40 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const DEFAULT_OPERATORS = [
-      "CARLOS RAMSES TORRES LAZARO (Coordinador)",
-      "VANESA PEREZ GALLARDO (Auxiliar Administrativo 1)",
-      "JESUS RUEDA RIVERO (Auxiliar Administrativo 2)",
-      "AUXILIAR ADMINISTRATIVO 3"
-    ];
-
-    // Estado local principal
+    // Estado global
     window.currentTab = 'traslados';
+    window.isMultiMode = false;
+    window.multiSelectedSet = new Set();
+
     window.dataStore = {
       traslados: {},
       oficios: {},
-      audit: [],
-      settings: {
-        maxTraslados: 400,
-        maxOficios: 400,
-        operators: DEFAULT_OPERATORS
-      }
+      settings: { maxTraslados: 400, maxOficios: 400 },
+      operators: [
+        "CARLOS RAMSES TORRES LAZARO (Coordinador)",
+        "VANESA PEREZ GALLARDO (Aux. Admin 1)",
+        "JESUS RUEDA RIVERO (Aux. Admin 2)",
+        "AUXILIAR ADMINISTRATIVO 3"
+      ],
+      audit: []
     };
+
     window.selectedFolioTarget = null;
 
-    // Conexión en tiempo real
+    // Sincronización en tiempo real desde Firebase
     onValue(ref(db, 'folios_data'), (snapshot) => {
       const data = snapshot.val();
       if (data) {
         window.dataStore.traslados = data.traslados || {};
         window.dataStore.oficios = data.oficios || {};
-        window.dataStore.audit = data.audit ? Object.values(data.audit) : [];
-
-        // Inicializar o sincronizar settings
-        const settings = data.settings || {};
-        window.dataStore.settings.maxTraslados = settings.maxTraslados || 400;
-        window.dataStore.settings.maxOficios = settings.maxOficios || 400;
-        
-        if (settings.operators && Array.isArray(settings.operators) && settings.operators.length > 0) {
-          window.dataStore.settings.operators = settings.operators;
-        } else {
-          window.dataStore.settings.operators = DEFAULT_OPERATORS;
+        window.dataStore.settings = data.settings || { maxTraslados: 400, maxOficios: 400 };
+        if (data.operators && data.operators.length > 0) {
+          window.dataStore.operators = data.operators;
         }
-
-        renderOperatorsSelect();
+        window.dataStore.audit = data.audit ? Object.values(data.audit) : [];
+        renderOperatorsDropdown();
         renderGrid();
         renderAudit();
-      } else {
-        // Primera inicialización en Firebase si está totalmente vacío
-        window.saveStateToFirebase();
       }
     });
 
@@ -402,199 +382,92 @@
       set(ref(db, 'folios_data'), {
         traslados: window.dataStore.traslados,
         oficios: window.dataStore.oficios,
-        audit: window.dataStore.audit,
-        settings: window.dataStore.settings
+        settings: window.dataStore.settings,
+        operators: window.dataStore.operators,
+        audit: window.dataStore.audit
       });
     };
   </script>
 
-  <!-- Lógica e Interacción de la Interfaz -->
   <script>
-    function getMaxFolios() {
-      const settings = window.dataStore.settings;
-      return window.currentTab === 'traslados' 
-        ? (settings.maxTraslados || 400)
-        : (settings.maxOficios || 400);
+    function renderOperatorsDropdown() {
+      const select = document.getElementById('operatorSelect');
+      const currentVal = select.value;
+      select.innerHTML = '';
+      window.dataStore.operators.forEach(op => {
+        const option = document.createElement('option');
+        option.value = op;
+        option.textContent = op;
+        select.appendChild(option);
+      });
+      if (currentVal && window.dataStore.operators.includes(currentVal)) {
+        select.value = currentVal;
+      }
     }
 
-    function renderOperatorsSelect() {
-      const select = document.getElementById('operatorSelect');
-      const currentSelected = select.value;
-      const operators = window.dataStore.settings.operators || [];
-
-      select.innerHTML = operators.map(op => 
-        `<option value="${op}">${op}</option>`
-      ).join('');
-
-      if (operators.includes(currentSelected)) {
-        select.value = currentSelected;
-      }
+    function getMaxLimit() {
+      const settings = window.dataStore.settings || {};
+      return window.currentTab === 'traslados' ? (settings.maxTraslados || 400) : (settings.maxOficios || 400);
     }
 
     function renderGrid() {
       const gridContainer = document.getElementById('folioGrid');
       gridContainer.innerHTML = '';
 
-      const maxFolios = getMaxFolios();
+      const maxLimit = getMaxLimit();
       const currentData = window.dataStore[window.currentTab] || {};
       let strikedCount = 0;
 
-      for (let i = 1; i <= maxFolios; i++) {
+      for (let i = 1; i <= maxLimit; i++) {
         const isStriked = !!currentData[i];
         if (isStriked) strikedCount++;
 
+        const isSelectedMulti = window.multiSelectedSet.has(i);
+
         const box = document.createElement('div');
         box.id = `folio-box-${i}`;
-        box.className = `folio-box h-10 border rounded-xl flex items-center justify-center font-bold text-xs cursor-pointer shadow-2xs ${
-          isStriked 
-            ? 'striked border-rose-300' 
-            : 'bg-emerald-50/70 hover:bg-emerald-100 text-emerald-800 border-emerald-200 hover:border-emerald-400'
-        }`;
         
+        let classes = 'folio-box h-10 border rounded-lg flex items-center justify-center font-bold text-sm cursor-pointer ';
+        if (isStriked) {
+          classes += 'striked border-rose-300';
+        } else if (isSelectedMulti) {
+          classes += 'selected-multi';
+        } else {
+          classes += 'bg-emerald-50/60 hover:bg-emerald-100 text-emerald-800 border-emerald-200 hover:border-emerald-400';
+        }
+
+        box.className = classes;
         box.onclick = () => handleFolioClick(i, isStriked);
         box.innerHTML = `<span class="num">${i}</span>`;
         gridContainer.appendChild(box);
       }
 
-      // Actualizar Estadísticas
-      const availableCount = maxFolios - strikedCount;
-      const progress = ((strikedCount / maxFolios) * 100).toFixed(1);
+      // Métricas
+      const availableCount = maxLimit - strikedCount;
+      const progress = ((strikedCount / maxLimit) * 100).toFixed(1);
 
-      document.getElementById('statTotal').textContent = maxFolios;
+      document.getElementById('statTotal').textContent = maxLimit;
       document.getElementById('statAvailable').textContent = availableCount;
       document.getElementById('statStriked').textContent = strikedCount;
       document.getElementById('statProgress').textContent = `${progress}%`;
-
-      // Actualizar título de sección y max en buscador
-      const sectionName = window.currentTab === 'traslados' ? 'Traslados de Dominio' : 'Oficios';
-      document.getElementById('sectionTitle').innerHTML = `<i class="fa-solid fa-table-cells text-blue-600"></i> Matriz Digital de ${sectionName} (1 - ${maxFolios})`;
-      document.getElementById('searchInput').setAttribute('max', maxFolios);
     }
 
-    function switchTab(tab) {
-      window.currentTab = tab;
-      
-      const tabT = document.getElementById('tabTraslados');
-      const tabO = document.getElementById('tabOficios');
-
-      if (tab === 'traslados') {
-        tabT.className = "px-5 py-2 rounded-lg font-bold text-sm transition-all bg-white text-blue-700 shadow-sm border border-slate-200 flex items-center gap-2";
-        tabO.className = "px-5 py-2 rounded-lg font-bold text-sm transition-all text-slate-600 hover:text-slate-900 flex items-center gap-2";
-      } else {
-        tabO.className = "px-5 py-2 rounded-lg font-bold text-sm transition-all bg-white text-blue-700 shadow-sm border border-slate-200 flex items-center gap-2";
-        tabT.className = "px-5 py-2 rounded-lg font-bold text-sm transition-all text-slate-600 hover:text-slate-900 flex items-center gap-2";
-      }
-
-      renderGrid();
-    }
-
-    // Modal Alert Personalizado
-    function showAlert(title, message, iconClass = 'fa-solid fa-circle-info', iconBg = 'bg-blue-100 text-blue-600') {
-      document.getElementById('alertModalTitle').textContent = title;
-      document.getElementById('alertModalMsg').textContent = message;
-      const iconContainer = document.getElementById('alertModalIcon');
-      iconContainer.className = `w-10 h-10 rounded-full flex items-center justify-center mx-auto text-lg ${iconBg}`;
-      iconContainer.innerHTML = `<i class="${iconClass}"></i>`;
-      document.getElementById('alertModal').classList.remove('hidden');
-    }
-
-    function closeAlertModal() {
-      document.getElementById('alertModal').classList.add('hidden');
-    }
-
-    // Aumentar límite dinámicamente (+50, +100)
-    function increaseFolioLimit(amount) {
-      const currentMax = getMaxFolios();
-      const newMax = currentMax + amount;
-      
-      if (window.currentTab === 'traslados') {
-        window.dataStore.settings.maxTraslados = newMax;
-      } else {
-        window.dataStore.settings.maxOficios = newMax;
-      }
-
-      window.saveStateToFirebase();
-      showAlert('Límite Ampliado', `Se aumentaron +${amount} folios a la sección. Nuevo máximo: ${newMax}.`, 'fa-solid fa-circle-check', 'bg-emerald-100 text-emerald-600');
-    }
-
-    // Límite Personalizado Modal
-    function openCustomLimitModal() {
-      const currentMax = getMaxFolios();
-      document.getElementById('customLimitTabName').textContent = window.currentTab === 'traslados' ? 'Traslados de Dominio' : 'Oficios';
-      document.getElementById('customLimitInput').value = currentMax;
-      document.getElementById('customLimitModal').classList.remove('hidden');
-    }
-
-    function closeCustomLimitModal() {
-      document.getElementById('customLimitModal').classList.add('hidden');
-    }
-
-    function saveCustomLimit() {
-      const inputVal = parseInt(document.getElementById('customLimitInput').value);
-      if (isNaN(inputVal) || inputVal < 1) {
-        showAlert('Valor Inválido', 'Ingresa un número válido mayor a 0.', 'fa-solid fa-triangle-exclamation', 'bg-amber-100 text-amber-600');
-        return;
-      }
-
-      if (window.currentTab === 'traslados') {
-        window.dataStore.settings.maxTraslados = inputVal;
-      } else {
-        window.dataStore.settings.maxOficios = inputVal;
-      }
-
-      window.saveStateToFirebase();
-      closeCustomLimitModal();
-      showAlert('Límite Actualizado', `El nuevo máximo de folios es ${inputVal}.`, 'fa-solid fa-circle-check', 'bg-emerald-100 text-emerald-600');
-    }
-
-    // Agregar Operadores Modal
-    function openAddOperatorModal() {
-      document.getElementById('newOpName').value = '';
-      document.getElementById('newOpRole').value = '';
-      document.getElementById('addOperatorModal').classList.remove('hidden');
-    }
-
-    function closeAddOperatorModal() {
-      document.getElementById('addOperatorModal').classList.add('hidden');
-    }
-
-    function saveNewOperator() {
-      const name = document.getElementById('newOpName').value.trim().toUpperCase();
-      const role = document.getElementById('newOpRole').value.trim();
-
-      if (!name) {
-        showAlert('Campo Requerido', 'Por favor ingresa el nombre del operador.', 'fa-solid fa-triangle-exclamation', 'bg-amber-100 text-amber-600');
-        return;
-      }
-
-      const formattedOp = role ? `${name} (${role})` : name;
-      const currentOps = window.dataStore.settings.operators || [];
-
-      if (currentOps.includes(formattedOp)) {
-        showAlert('Ya Existe', 'Este operador ya se encuentra registrado.', 'fa-solid fa-triangle-exclamation', 'bg-amber-100 text-amber-600');
-        return;
-      }
-
-      currentOps.push(formattedOp);
-      window.dataStore.settings.operators = currentOps;
-      window.saveStateToFirebase();
-
-      // Seleccionar automáticamente el nuevo operador recién registrado
-      document.getElementById('operatorSelect').value = formattedOp;
-
-      closeAddOperatorModal();
-      showAlert('Operador Registrado', `Se agregó a "${formattedOp}" correctamente en el equipo.`, 'fa-solid fa-user-check', 'bg-blue-100 text-blue-600');
-    }
-
-    // Interacción con Folios
     function handleFolioClick(folioNum, isStriked) {
-      window.selectedFolioTarget = folioNum;
-      const operator = document.getElementById('operatorSelect').value;
+      if (window.isMultiMode) {
+        if (isStriked) return; // No seleccionar lo ya tachado
+        if (window.multiSelectedSet.has(folioNum)) {
+          window.multiSelectedSet.delete(folioNum);
+        } else {
+          window.multiSelectedSet.add(folioNum);
+        }
+        document.getElementById('multiCountText').textContent = window.multiSelectedSet.size;
+        renderGrid();
+        return;
+      }
 
+      window.selectedFolioTarget = folioNum;
       if (!isStriked) {
         document.getElementById('modalFolioNum').textContent = `Folio #${folioNum}`;
-        document.getElementById('modalTabName').textContent = window.currentTab === 'traslados' ? 'Traslados de Dominio' : 'Oficios';
-        document.getElementById('modalOperatorName').textContent = operator;
         document.getElementById('strikeModal').classList.remove('hidden');
       } else {
         document.getElementById('unstrikeFolioNum').textContent = `Folio #${folioNum}`;
@@ -603,26 +476,139 @@
       }
     }
 
-    function closeStrikeModal() {
-      document.getElementById('strikeModal').classList.add('hidden');
+    function switchTab(tab) {
+      window.currentTab = tab;
+      window.multiSelectedSet.clear();
+      if (window.isMultiMode) toggleMultiMode();
+
+      const tabT = document.getElementById('tabTraslados');
+      const tabO = document.getElementById('tabOficios');
+      const title = document.getElementById('sectionTitle');
+
+      if (tab === 'traslados') {
+        tabT.className = "px-5 py-2 rounded-md font-semibold text-sm transition-all bg-white text-blue-700 shadow-sm border border-slate-200";
+        tabO.className = "px-5 py-2 rounded-md font-semibold text-sm transition-all text-slate-600 hover:text-slate-900";
+        title.innerHTML = `<i class="fa-solid fa-table-cells text-blue-600"></i> Matriz Digital de Traslados de Dominio`;
+      } else {
+        tabO.className = "px-5 py-2 rounded-md font-semibold text-sm transition-all bg-white text-blue-700 shadow-sm border border-slate-200";
+        tabT.className = "px-5 py-2 rounded-md font-semibold text-sm transition-all text-slate-600 hover:text-slate-900";
+        title.innerHTML = `<i class="fa-solid fa-table-cells text-blue-600"></i> Matriz Digital de Oficios`;
+      }
+
+      renderGrid();
     }
 
-    function closeUnstrikeModal() {
-      document.getElementById('unstrikeModal').classList.add('hidden');
+    // Tachar Rango (ej. 1 a 200)
+    function openRangeModal() {
+      document.getElementById('rangeStartInput').value = 1;
+      document.getElementById('rangeEndInput').value = 200;
+      document.getElementById('rangeModal').classList.remove('hidden');
     }
+
+    function closeRangeModal() {
+      document.getElementById('rangeModal').classList.add('hidden');
+    }
+
+    function confirmRangeStrike() {
+      const start = parseInt(document.getElementById('rangeStartInput').value);
+      const end = parseInt(document.getElementById('rangeEndInput').value);
+      const operator = document.getElementById('operatorSelect').value;
+      const section = window.currentTab;
+      const maxLimit = getMaxLimit();
+
+      if (isNaN(start) || isNaN(end) || start < 1 || end > maxLimit || start > end) {
+        alert(`Ingresa un rango válido entre 1 y ${maxLimit}.`);
+        return;
+      }
+
+      if (!window.dataStore[section]) window.dataStore[section] = {};
+
+      let countAdded = 0;
+      const nowStr = new Date().toLocaleString('es-MX');
+
+      for (let i = start; i <= end; i++) {
+        if (!window.dataStore[section][i]) {
+          window.dataStore[section][i] = { operator: operator, timestamp: nowStr };
+          countAdded++;
+        }
+      }
+
+      if (countAdded > 0) {
+        window.dataStore.audit.unshift({
+          date: nowStr,
+          section: section.toUpperCase(),
+          folio: `${start} al ${end}`,
+          action: `TACHADO EN RANGO (${countAdded} folios)`,
+          operator: operator
+        });
+        window.saveStateToFirebase();
+      }
+
+      closeRangeModal();
+    }
+
+    // Modo Seleccionar Varios Manual
+    function toggleMultiMode() {
+      window.isMultiMode = !window.isMultiMode;
+      const btn = document.getElementById('btnMultiMode');
+      const text = document.getElementById('btnMultiText');
+      const bar = document.getElementById('multiFloatingBar');
+
+      if (window.isMultiMode) {
+        btn.className = "bg-blue-600 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 ring-2 ring-blue-400";
+        text.textContent = "Cancelando Selección...";
+        bar.classList.remove('hidden');
+      } else {
+        btn.className = "bg-slate-700 hover:bg-slate-800 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-1.5";
+        text.textContent = "Modo Seleccionar Varios";
+        bar.classList.add('hidden');
+        window.multiSelectedSet.clear();
+      }
+      renderGrid();
+    }
+
+    function cancelMultiMode() {
+      toggleMultiMode();
+    }
+
+    function confirmMultiSelection() {
+      if (window.multiSelectedSet.size === 0) return;
+
+      const operator = document.getElementById('operatorSelect').value;
+      const section = window.currentTab;
+      const nowStr = new Date().toLocaleString('es-MX');
+
+      if (!window.dataStore[section]) window.dataStore[section] = {};
+
+      const listFolios = Array.from(window.multiSelectedSet).sort((a,b) => a-b);
+      listFolios.forEach(folio => {
+        window.dataStore[section][folio] = { operator: operator, timestamp: nowStr };
+      });
+
+      window.dataStore.audit.unshift({
+        date: nowStr,
+        section: section.toUpperCase(),
+        folio: listFolios.join(', '),
+        action: `TACHADO MULTIPLE (${listFolios.length} folios)`,
+        operator: operator
+      });
+
+      window.saveStateToFirebase();
+      toggleMultiMode();
+    }
+
+    // Modales de confirmación individual
+    function closeStrikeModal() { document.getElementById('strikeModal').classList.add('hidden'); }
+    function closeUnstrikeModal() { document.getElementById('unstrikeModal').classList.add('hidden'); }
 
     function confirmStrike() {
       const folio = window.selectedFolioTarget;
-      const operator = document.getElementById('operatorSelect').value || 'SISTEMA';
+      const operator = document.getElementById('operatorSelect').value;
       const section = window.currentTab;
 
       if (!window.dataStore[section]) window.dataStore[section] = {};
-      window.dataStore[section][folio] = {
-        operator: operator,
-        timestamp: new Date().toLocaleString('es-MX')
-      };
+      window.dataStore[section][folio] = { operator: operator, timestamp: new Date().toLocaleString('es-MX') };
 
-      // Registro en Bitácora
       window.dataStore.audit.unshift({
         date: new Date().toLocaleString('es-MX'),
         section: section.toUpperCase(),
@@ -636,14 +622,12 @@
     }
 
     function confirmUnstrike() {
-      const pin = document.getElementById('adminPinInput').value;
-      if (pin !== '0228') {
-        showAlert('PIN Incorrecto', 'El PIN de Administrador ingresado no es válido.', 'fa-solid fa-lock', 'bg-rose-100 text-rose-600');
+      if (document.getElementById('adminPinInput').value !== '1234') {
+        alert('PIN incorrecto.');
         return;
       }
-
       const folio = window.selectedFolioTarget;
-      const operator = document.getElementById('operatorSelect').value || 'SISTEMA';
+      const operator = document.getElementById('operatorSelect').value;
       const section = window.currentTab;
 
       delete window.dataStore[section][folio];
@@ -660,28 +644,56 @@
       closeUnstrikeModal();
     }
 
-    function strikethroughNextAvailable() {
-      const maxFolios = getMaxFolios();
-      const currentData = window.dataStore[window.currentTab] || {};
-      for (let i = 1; i <= maxFolios; i++) {
-        if (!currentData[i]) {
-          handleFolioClick(i, false);
-          return;
-        }
+    // Modal Operador
+    function openAddOperatorModal() {
+      document.getElementById('newOperatorNameInput').value = '';
+      document.getElementById('addOperatorModal').classList.remove('hidden');
+    }
+    function closeAddOperatorModal() { document.getElementById('addOperatorModal').classList.add('hidden'); }
+
+    function confirmAddOperator() {
+      const name = document.getElementById('newOperatorNameInput').value.trim();
+      if (!name) return;
+
+      if (!window.dataStore.operators.includes(name)) {
+        window.dataStore.operators.push(name);
+        window.saveStateToFirebase();
       }
-      showAlert('Sección Completa', 'Todos los folios de esta sección han sido tachados.', 'fa-solid fa-flag-checkered', 'bg-blue-100 text-blue-600');
+      closeAddOperatorModal();
     }
 
-    function searchFolio(event) {
-      const maxFolios = getMaxFolios();
-      const query = parseInt(document.getElementById('searchInput').value);
-      if (isNaN(query) || query < 1 || query > maxFolios) return;
+    // Modal Expandir Folios
+    function openExpandModal() {
+      document.getElementById('customLimitInput').value = getMaxLimit() + 100;
+      document.getElementById('expandModal').classList.remove('hidden');
+    }
+    function closeExpandModal() { document.getElementById('expandModal').classList.add('hidden'); }
+
+    function confirmExpandLimit() {
+      const newLimit = parseInt(document.getElementById('customLimitInput').value);
+      if (isNaN(newLimit) || newLimit < 100) {
+        alert('Ingresa un número válido mayor a 100.');
+        return;
+      }
+      if (!window.dataStore.settings) window.dataStore.settings = {};
+      if (window.currentTab === 'traslados') {
+        window.dataStore.settings.maxTraslados = newLimit;
+      } else {
+        window.dataStore.settings.maxOficios = newLimit;
+      }
+      window.saveStateToFirebase();
+      closeExpandModal();
+    }
+
+    function searchFolio() {
+      const query = document.getElementById('searchInput').value;
+      if (!query) return;
 
       const targetBox = document.getElementById(`folio-box-${query}`);
       if (targetBox) {
         targetBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        targetBox.classList.add('ring-4', 'ring-blue-500', 'scale-110');
-        setTimeout(() => targetBox.classList.remove('ring-4', 'ring-blue-500', 'scale-110'), 2000);
+        targetBox.classList.add('ring-4', 'ring-blue-500');
+        setTimeout(() => targetBox.classList.remove('ring-4', 'ring-blue-500'), 2000);
       }
     }
 
@@ -690,16 +702,16 @@
       const audit = window.dataStore.audit || [];
 
       if (audit.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">No hay registros de movimientos en la base de datos.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">No hay registros de movimientos.</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = audit.slice(0, 60).map(row => `
-        <tr class="hover:bg-slate-50 border-b border-slate-100 transition-colors">
+      tbody.innerHTML = audit.slice(0, 50).map(row => `
+        <tr class="hover:bg-slate-50 border-b border-slate-100">
           <td class="p-2.5 font-medium">${row.date}</td>
-          <td class="p-2.5"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${row.section === 'TRASLADOS' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}">${row.section}</span></td>
-          <td class="p-2.5 font-bold text-slate-800">Folio #${row.folio}</td>
-          <td class="p-2.5"><span class="font-bold ${row.action === 'TACHADO' ? 'text-rose-600' : 'text-emerald-600'}">${row.action}</span></td>
+          <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${row.section === 'TRASLADOS' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}">${row.section}</span></td>
+          <td class="p-2.5 font-bold text-slate-800">Folio ${row.folio}</td>
+          <td class="p-2.5"><span class="font-bold ${row.action.includes('LIBERADO') ? 'text-emerald-600' : 'text-rose-600'}">${row.action}</span></td>
           <td class="p-2.5 text-slate-600">${row.operator}</td>
         </tr>
       `).join('');
@@ -707,14 +719,10 @@
 
     function exportAuditCSV() {
       const audit = window.dataStore.audit || [];
-      if (audit.length === 0) {
-        showAlert('Bitácora Vacía', 'No hay registros guardados para exportar.', 'fa-solid fa-circle-info', 'bg-slate-100 text-slate-600');
-        return;
-      }
+      if (audit.length === 0) return alert('No hay datos en la bitácora.');
 
-      let csv = '\uFEFF'; // UTF-8 BOM para acentos en Excel
+      let csv = '\uFEFF';
       csv += "Fecha y Hora,Sección,Folio,Acción,Operador\n";
-      
       audit.forEach(row => {
         csv += `"${row.date}","${row.section}","${row.folio}","${row.action}","${row.operator}"\n`;
       });
@@ -722,8 +730,8 @@
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `Bitacora_Control_Folios_${new Date().toISOString().slice(0,10)}.csv`);
+      link.href = url;
+      link.download = `Bitacora_Control_Folios_${new Date().toISOString().slice(0,10)}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
