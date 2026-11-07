@@ -61,16 +61,30 @@
         </div>
       </div>
 
-      <!-- Selector de Operador -->
-      <div class="flex items-center space-x-2 bg-slate-800 p-1.5 rounded-lg border border-slate-700">
-        <label class="text-xs font-semibold text-slate-300 pl-2 flex items-center gap-1.5">
-          <i class="fa-solid fa-user-gear text-blue-400"></i> Operador:
-        </label>
-        <select id="operatorSelect" class="bg-slate-900 text-white text-xs font-medium rounded-md px-3 py-1.5 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </select>
-        <button onclick="openAddOperatorModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2.5 py-1.5 rounded-md font-bold transition-colors" title="Agregar nuevo operador">
-          <i class="fa-solid fa-user-plus"></i>
-        </button>
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- Selector de Año / Ejercicio Fiscal -->
+        <div class="flex items-center space-x-1.5 bg-slate-800 p-1.5 rounded-lg border border-slate-700">
+          <label class="text-xs font-semibold text-amber-400 pl-1 flex items-center gap-1">
+            <i class="fa-solid fa-calendar-days"></i> Ejercicio:
+          </label>
+          <select id="yearSelect" onchange="changeYear(this.value)" class="bg-slate-900 text-amber-300 font-bold text-xs rounded-md px-2.5 py-1 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500">
+          </select>
+          <button onclick="openAddYearModal()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-2 py-1 rounded-md font-bold transition-colors" title="Agregar nuevo año">
+            <i class="fa-solid fa-plus"></i> Año
+          </button>
+        </div>
+
+        <!-- Selector de Operador -->
+        <div class="flex items-center space-x-2 bg-slate-800 p-1.5 rounded-lg border border-slate-700">
+          <label class="text-xs font-semibold text-slate-300 pl-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-user-gear text-blue-400"></i> Operador:
+          </label>
+          <select id="operatorSelect" class="bg-slate-900 text-white text-xs font-medium rounded-md px-2.5 py-1 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </select>
+          <button onclick="openAddOperatorModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded-md font-bold transition-colors" title="Agregar nuevo operador">
+            <i class="fa-solid fa-user-plus"></i>
+          </button>
+        </div>
       </div>
 
       <div class="flex items-center space-x-2">
@@ -99,19 +113,16 @@
 
       <!-- Acciones Rápidas -->
       <div class="flex flex-wrap items-center gap-2">
-        <!-- Tachar Rango (Ejemplo 1 al 200) -->
         <button onclick="openRangeModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
           <i class="fa-solid fa-list-check"></i>
           <span>Tachar Rango (ej. 1 al 200)</span>
         </button>
 
-        <!-- Activar Selección Múltiple Manual -->
         <button id="btnMultiMode" onclick="toggleMultiMode()" class="bg-slate-700 hover:bg-slate-800 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
           <i class="fa-solid fa-object-group"></i>
           <span id="btnMultiText">Modo Seleccionar Varios</span>
         </button>
 
-        <!-- Buscador -->
         <div class="relative">
           <input type="number" id="searchInput" placeholder="Buscar folio..." min="1" onkeyup="searchFolio(event)" class="w-32 pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white">
           <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-slate-400 text-xs"></i>
@@ -119,7 +130,7 @@
       </div>
     </div>
 
-    <!-- Métrica de Folios + Control de Límite -->
+    <!-- Métrica de Folios -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
         <div>
@@ -165,17 +176,15 @@
         </h2>
         <div class="flex items-center space-x-4 text-xs font-medium text-slate-500">
           <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-100 border border-emerald-300"></span> Disponible</span>
-          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-rose-100 border border-rose-300"></span> Tachado</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-rose-100 border border-rose-300"></span> Tachado (Clic para detalles)</span>
         </div>
       </div>
 
-      <!-- Cabecera 10 Cols -->
       <div class="grid grid-cols-10 gap-1.5 text-center text-xs font-bold text-slate-500 bg-slate-100 py-2 rounded-lg border border-slate-200">
         <div>COL 1</div><div>COL 2</div><div>COL 3</div><div>COL 4</div><div>COL 5</div>
         <div>COL 6</div><div>COL 7</div><div>COL 8</div><div>COL 9</div><div>COL 10</div>
       </div>
 
-      <!-- Grilla de Folios -->
       <div id="folioGrid" class="cell-grid pt-1"></div>
     </div>
 
@@ -183,32 +192,33 @@
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-3">
       <div class="flex items-center justify-between border-b border-slate-200 pb-3">
         <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-          <i class="fa-solid fa-clock-rotate-left text-blue-600"></i> Bitácora de Movimientos
+          <i class="fa-solid fa-clock-rotate-left text-blue-600"></i> Bitácora de Movimientos - Ejercicio <span id="auditYearBadge" class="text-amber-600 font-extrabold"></span>
         </h3>
         <button onclick="exportAuditCSV()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-md border border-slate-300 transition-colors flex items-center gap-1.5">
-          <i class="fa-solid fa-file-excel text-emerald-600"></i> Exportar CSV
+          <i class="fa-solid fa-file-excel text-emerald-600"></i> Exportar CSV Completo
         </button>
       </div>
-      <div class="max-h-48 overflow-y-auto custom-scrollbar border border-slate-200 rounded-lg">
+      <div class="max-h-56 overflow-y-auto custom-scrollbar border border-slate-200 rounded-lg">
         <table class="w-full text-left text-xs text-slate-600">
           <thead class="bg-slate-50 text-slate-700 font-bold sticky top-0 border-b border-slate-200">
             <tr>
               <th class="p-2.5">Fecha / Hora</th>
               <th class="p-2.5">Sección</th>
               <th class="p-2.5">Folio</th>
+              <th class="p-2.5">Datos del Folio / Detalle</th>
               <th class="p-2.5">Acción</th>
               <th class="p-2.5">Operador</th>
             </tr>
           </thead>
           <tbody id="auditTableBody" class="divide-y divide-slate-100">
-            <tr><td colspan="5" class="p-4 text-center text-slate-400 italic">No hay registros de movimientos.</td></tr>
+            <tr><td colspan="6" class="p-4 text-center text-slate-400 italic">No hay registros de movimientos en este ejercicio.</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </main>
 
-  <!-- Barra Flotante para Confirmar Selección Múltiple Manual -->
+  <!-- Barra Flotante Selección Múltiple -->
   <div id="multiFloatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-4 z-40 hidden border border-slate-700">
     <span class="text-xs font-semibold"><i class="fa-solid fa-check-double text-blue-400 mr-2"></i><span id="multiCountText">0</span> folios seleccionados</span>
     <button onclick="confirmMultiSelection()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-1.5 rounded-full transition-colors shadow">
@@ -219,7 +229,113 @@
     </button>
   </div>
 
-  <!-- Modal Tachar Rango (ej. 1 al 200) -->
+  <!-- Modal Tachar TRASLADOS -->
+  <div id="strikeTrasladoModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center space-x-3 border-b border-slate-100 pb-3">
+        <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-lg font-bold">
+          <i class="fa-solid fa-file-contract"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-base text-slate-800">Tachar Traslado de Dominio</h3>
+          <p class="text-xs text-slate-500">Folio: <strong id="trasladoFolioNum" class="text-blue-600 font-black"></strong> (<span id="trasladoYearText"></span>)</p>
+        </div>
+      </div>
+      
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1">Clave Catastral (16 dígitos):</label>
+          <input type="text" id="catastralInput" maxlength="16" placeholder="Ej. 1090100100000000" class="w-full text-xs font-mono font-bold tracking-wider p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          <span class="text-[10px] text-slate-400">Exactamente 16 dígitos alfanuméricos/numéricos.</span>
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1">Nombre del Nuevo Propietario:</label>
+          <input type="text" id="ownerInput" placeholder="Ej. Juan Pérez Gómez" class="w-full text-xs font-medium p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1">Detalles / Observaciones (opcional):</label>
+          <textarea id="trasladoDetailsInput" rows="2" placeholder="Notas adicionales sobre el traslado..." class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+        </div>
+      </div>
+
+      <div class="flex space-x-2 pt-2">
+        <button onclick="closeStrikeTrasladoModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors">Cancelar</button>
+        <button onclick="confirmStrikeTraslado()" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm">Guardar y Tachar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Tachar OFICIOS -->
+  <div id="strikeOficioModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center space-x-3 border-b border-slate-100 pb-3">
+        <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-lg font-bold">
+          <i class="fa-solid fa-envelope-open-text"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-base text-slate-800">Tachar Folio de Oficio</h3>
+          <p class="text-xs text-slate-500">Folio: <strong id="oficioFolioNum" class="text-purple-600 font-black"></strong> (<span id="oficioYearText"></span>)</p>
+        </div>
+      </div>
+      
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1">¿A cuál oficio se contesta? (Si es el caso):</label>
+          <input type="text" id="replyToOficioInput" placeholder="Ej. Oficio N° OF-2026-089 o No aplica" class="w-full text-xs font-medium p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1">Asunto / Detalles del Oficio:</label>
+          <textarea id="oficioDetailsInput" rows="2" placeholder="Resumen del oficio o solicitud..." class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"></textarea>
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1">Anexar Oficio Escaneado (PDF o Imagen):</label>
+          <input type="file" id="scannedFileInput" accept="image/*,application/pdf" class="w-full text-xs p-1.5 border border-slate-300 rounded-lg file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+          <span class="text-[10px] text-slate-400 block mt-0.5">Se guardará de forma digital para que las 4 computadoras lo puedan ver.</span>
+        </div>
+      </div>
+
+      <div class="flex space-x-2 pt-2">
+        <button onclick="closeStrikeOficioModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors">Cancelar</button>
+        <button onclick="confirmStrikeOficio()" class="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm">Guardar y Tachar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ver Detalles + Desbloquear -->
+  <div id="viewFolioModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center space-x-2">
+          <span class="w-3 h-3 bg-rose-500 rounded-full"></span>
+          <h3 class="font-bold text-slate-800 text-base" id="viewFolioTitle">Folio #</h3>
+        </div>
+        <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700">TACHADO</span>
+      </div>
+
+      <div id="viewFolioContent" class="space-y-3 text-xs"></div>
+
+      <div class="border-t border-slate-100 pt-3 flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] text-slate-400">PIN de liberación: <strong>1234</strong></span>
+          <div class="flex space-x-2">
+            <button onclick="closeViewFolioModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs">Cerrar</button>
+            <button onclick="showUnlockSection()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg text-xs shadow-sm">Liberar / Desbloquear</button>
+          </div>
+        </div>
+
+        <div id="unlockPinSection" class="hidden pt-2 border-t border-slate-100 space-y-2">
+          <input type="password" id="adminPinInput" placeholder="Ingresa PIN (1234)" class="w-full text-center tracking-widest text-sm font-bold py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          <button onclick="confirmUnstrike()" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs">Confirmar Desbloqueo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Tachar Rango -->
   <div id="rangeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100">
       <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto text-xl">
@@ -227,15 +343,15 @@
       </div>
       <div class="text-center">
         <h3 class="font-bold text-lg text-slate-800">Tachar Rango de Folios</h3>
-        <p class="text-xs text-slate-500 mt-1">Ingresa el rango inicial y final para tachar múltiples folios de golpe.</p>
+        <p class="text-xs text-slate-500 mt-1">Tacha múltiples folios de golpe (ej. del 1 al 200).</p>
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="text-[11px] font-bold text-slate-600">Desde el Folio:</label>
+          <label class="text-[11px] font-bold text-slate-600">Desde Folio:</label>
           <input type="number" id="rangeStartInput" value="1" min="1" class="w-full text-center font-bold py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none">
         </div>
         <div>
-          <label class="text-[11px] font-bold text-slate-600">Hasta el Folio:</label>
+          <label class="text-[11px] font-bold text-slate-600">Hasta Folio:</label>
           <input type="number" id="rangeEndInput" value="200" min="1" class="w-full text-center font-bold py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none">
         </div>
       </div>
@@ -246,7 +362,27 @@
     </div>
   </div>
 
-  <!-- Modal Añadir Operador -->
+  <!-- Modal Agregar Año -->
+  <div id="addYearModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+      <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-xl">
+        <i class="fa-solid fa-calendar-plus"></i>
+      </div>
+      <div class="text-center">
+        <h3 class="font-bold text-lg text-slate-800">Nuevo Ejercicio Fiscal</h3>
+        <p class="text-xs text-slate-500 mt-1">Escribe el nuevo año para habilitar su propio control de folios.</p>
+      </div>
+      <div>
+        <input type="number" id="newYearInput" placeholder="Ej. 2027, 2028..." min="2020" max="2100" class="w-full text-center font-bold text-lg p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+      </div>
+      <div class="flex space-x-2 pt-2">
+        <button onclick="closeAddYearModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors">Cancelar</button>
+        <button onclick="confirmAddYear()" class="flex-1 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm">Crear Año</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Agregar Operador -->
   <div id="addOperatorModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100">
       <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-xl">
@@ -254,7 +390,7 @@
       </div>
       <div class="text-center">
         <h3 class="font-bold text-lg text-slate-800">Agregar Operador</h3>
-        <p class="text-xs text-slate-500 mt-1">Escribe el nombre completo y cargo para incluirlo en la lista.</p>
+        <p class="text-xs text-slate-500 mt-1">Nombre completo y puesto para la bitácora.</p>
       </div>
       <div>
         <input type="text" id="newOperatorNameInput" placeholder="Ej. MARIA LOPEZ (Aux. Admin 4)" class="w-full text-sm font-medium p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
@@ -266,7 +402,7 @@
     </div>
   </div>
 
-  <!-- Modal Expandir Cantidad de Folios -->
+  <!-- Modal Expandir Folios -->
   <div id="expandModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100">
       <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl">
@@ -274,7 +410,7 @@
       </div>
       <div class="text-center">
         <h3 class="font-bold text-lg text-slate-800">Aumentar Total de Folios</h3>
-        <p class="text-xs text-slate-500 mt-1">Define el nuevo límite máximo de folios para esta sección.</p>
+        <p class="text-xs text-slate-500 mt-1">Define el nuevo límite de folios para este año.</p>
       </div>
       <div>
         <input type="number" id="customLimitInput" placeholder="Ej. 500, 600, 1000..." min="100" class="w-full text-center font-bold text-lg p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
@@ -282,43 +418,6 @@
       <div class="flex space-x-2 pt-2">
         <button onclick="closeExpandModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors">Cancelar</button>
         <button onclick="confirmExpandLimit()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm">Actualizar Límite</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Confirmación Individual -->
-  <div id="strikeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100">
-      <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-xl">
-        <i class="fa-solid fa-strikethrough"></i>
-      </div>
-      <div class="text-center">
-        <h3 class="font-bold text-lg text-slate-800">Confirmar Tachado</h3>
-        <p class="text-xs text-slate-500 mt-1">¿Deseas tachar el <strong id="modalFolioNum" class="text-rose-600 font-black"></strong>?</p>
-      </div>
-      <div class="flex space-x-2 pt-2">
-        <button onclick="closeStrikeModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors">Cancelar</button>
-        <button onclick="confirmStrike()" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm">Sí, Tachar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Liberar Folio (PIN) -->
-  <div id="unstrikeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100">
-      <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-xl">
-        <i class="fa-solid fa-key"></i>
-      </div>
-      <div class="text-center">
-        <h3 class="font-bold text-lg text-slate-800">Desbloquear Folio</h3>
-        <p class="text-xs text-slate-500 mt-1">Ingresa el PIN de Administrador para quitar el tachado del <strong id="unstrikeFolioNum" class="text-slate-800"></strong>.</p>
-      </div>
-      <div>
-        <input type="password" id="adminPinInput" placeholder="PIN de Administrador (1234)" class="w-full text-center tracking-widest text-lg font-bold py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-      </div>
-      <div class="flex space-x-2 pt-2">
-        <button onclick="closeUnstrikeModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors">Cancelar</button>
-        <button onclick="confirmUnstrike()" class="flex-1 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm">Liberar Folio</button>
       </div>
     </div>
   </div>
@@ -341,10 +440,12 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Estado global
+    window.selectedYear = '2026';
+    window.yearsList = ['2025', '2026', '2027', '2028', '2029', '2030'];
     window.currentTab = 'traslados';
     window.isMultiMode = false;
     window.multiSelectedSet = new Set();
+    window.allYearsData = {};
 
     window.dataStore = {
       traslados: {},
@@ -361,35 +462,87 @@
 
     window.selectedFolioTarget = null;
 
-    // Sincronización en tiempo real desde Firebase
     onValue(ref(db, 'folios_data'), (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        window.dataStore.traslados = data.traslados || {};
-        window.dataStore.oficios = data.oficios || {};
-        window.dataStore.settings = data.settings || { maxTraslados: 400, maxOficios: 400 };
-        if (data.operators && data.operators.length > 0) {
-          window.dataStore.operators = data.operators;
-        }
-        window.dataStore.audit = data.audit ? Object.values(data.audit) : [];
+        if (data.yearsList && data.yearsList.length > 0) window.yearsList = data.yearsList;
+        if (data.operators && data.operators.length > 0) window.dataStore.operators = data.operators;
+        window.allYearsData = data.yearsData || {};
+        
+        loadCurrentYearData();
+        renderYearsDropdown();
         renderOperatorsDropdown();
         renderGrid();
         renderAudit();
       }
     });
 
+    window.loadCurrentYearData = function() {
+      const yData = window.allYearsData[window.selectedYear] || {};
+      window.dataStore.traslados = yData.traslados || {};
+      window.dataStore.oficios = yData.oficios || {};
+      window.dataStore.settings = yData.settings || { maxTraslados: 400, maxOficios: 400 };
+      window.dataStore.audit = yData.audit ? Object.values(yData.audit) : [];
+      document.getElementById('auditYearBadge').textContent = window.selectedYear;
+    };
+
     window.saveStateToFirebase = function() {
-      set(ref(db, 'folios_data'), {
+      if (!window.allYearsData[window.selectedYear]) window.allYearsData[window.selectedYear] = {};
+      window.allYearsData[window.selectedYear] = {
         traslados: window.dataStore.traslados,
         oficios: window.dataStore.oficios,
         settings: window.dataStore.settings,
-        operators: window.dataStore.operators,
         audit: window.dataStore.audit
+      };
+
+      set(ref(db, 'folios_data'), {
+        yearsList: window.yearsList,
+        operators: window.dataStore.operators,
+        yearsData: window.allYearsData
       });
     };
   </script>
 
   <script>
+    function renderYearsDropdown() {
+      const select = document.getElementById('yearSelect');
+      select.innerHTML = '';
+      window.yearsList.forEach(yr => {
+        const opt = document.createElement('option');
+        opt.value = yr;
+        opt.textContent = yr;
+        select.appendChild(opt);
+      });
+      select.value = window.selectedYear;
+    }
+
+    function changeYear(newYear) {
+      window.selectedYear = newYear;
+      window.multiSelectedSet.clear();
+      if (window.isMultiMode) toggleMultiMode();
+      window.loadCurrentYearData();
+      renderGrid();
+      renderAudit();
+    }
+
+    function openAddYearModal() {
+      document.getElementById('newYearInput').value = parseInt(window.selectedYear) + 1;
+      document.getElementById('addYearModal').classList.remove('hidden');
+    }
+    function closeAddYearModal() { document.getElementById('addYearModal').classList.add('hidden'); }
+
+    function confirmAddYear() {
+      const yr = document.getElementById('newYearInput').value.trim();
+      if (!yr || yr < 2020 || yr > 2100) return alert('Ingresa un año válido.');
+      if (!window.yearsList.includes(yr)) {
+        window.yearsList.push(yr);
+        window.yearsList.sort();
+      }
+      window.selectedYear = yr;
+      window.saveStateToFirebase();
+      closeAddYearModal();
+    }
+
     function renderOperatorsDropdown() {
       const select = document.getElementById('operatorSelect');
       const currentVal = select.value;
@@ -442,7 +595,6 @@
         gridContainer.appendChild(box);
       }
 
-      // Métricas
       const availableCount = maxLimit - strikedCount;
       const progress = ((strikedCount / maxLimit) * 100).toFixed(1);
 
@@ -454,7 +606,7 @@
 
     function handleFolioClick(folioNum, isStriked) {
       if (window.isMultiMode) {
-        if (isStriked) return; // No seleccionar lo ya tachado
+        if (isStriked) return;
         if (window.multiSelectedSet.has(folioNum)) {
           window.multiSelectedSet.delete(folioNum);
         } else {
@@ -466,13 +618,25 @@
       }
 
       window.selectedFolioTarget = folioNum;
+
       if (!isStriked) {
-        document.getElementById('modalFolioNum').textContent = `Folio #${folioNum}`;
-        document.getElementById('strikeModal').classList.remove('hidden');
+        if (window.currentTab === 'traslados') {
+          document.getElementById('trasladoFolioNum').textContent = `Folio #${folioNum}`;
+          document.getElementById('trasladoYearText').textContent = window.selectedYear;
+          document.getElementById('catastralInput').value = '';
+          document.getElementById('ownerInput').value = '';
+          document.getElementById('trasladoDetailsInput').value = '';
+          document.getElementById('strikeTrasladoModal').classList.remove('hidden');
+        } else {
+          document.getElementById('oficioFolioNum').textContent = `Folio #${folioNum}`;
+          document.getElementById('oficioYearText').textContent = window.selectedYear;
+          document.getElementById('replyToOficioInput').value = '';
+          document.getElementById('oficioDetailsInput').value = '';
+          document.getElementById('scannedFileInput').value = '';
+          document.getElementById('strikeOficioModal').classList.remove('hidden');
+        }
       } else {
-        document.getElementById('unstrikeFolioNum').textContent = `Folio #${folioNum}`;
-        document.getElementById('adminPinInput').value = '';
-        document.getElementById('unstrikeModal').classList.remove('hidden');
+        openViewFolioModal(folioNum);
       }
     }
 
@@ -488,26 +652,183 @@
       if (tab === 'traslados') {
         tabT.className = "px-5 py-2 rounded-md font-semibold text-sm transition-all bg-white text-blue-700 shadow-sm border border-slate-200";
         tabO.className = "px-5 py-2 rounded-md font-semibold text-sm transition-all text-slate-600 hover:text-slate-900";
-        title.innerHTML = `<i class="fa-solid fa-table-cells text-blue-600"></i> Matriz Digital de Traslados de Dominio`;
+        title.innerHTML = `<i class="fa-solid fa-table-cells text-blue-600"></i> Matriz Digital de Traslados de Dominio (${window.selectedYear})`;
       } else {
         tabO.className = "px-5 py-2 rounded-md font-semibold text-sm transition-all bg-white text-blue-700 shadow-sm border border-slate-200";
         tabT.className = "px-5 py-2 rounded-md font-semibold text-sm transition-all text-slate-600 hover:text-slate-900";
-        title.innerHTML = `<i class="fa-solid fa-table-cells text-blue-600"></i> Matriz Digital de Oficios`;
+        title.innerHTML = `<i class="fa-solid fa-table-cells text-blue-600"></i> Matriz Digital de Oficios (${window.selectedYear})`;
       }
 
       renderGrid();
     }
 
-    // Tachar Rango (ej. 1 a 200)
+    function closeStrikeTrasladoModal() { document.getElementById('strikeTrasladoModal').classList.add('hidden'); }
+
+    function confirmStrikeTraslado() {
+      const catastral = document.getElementById('catastralInput').value.trim();
+      const owner = document.getElementById('ownerInput').value.trim();
+      const details = document.getElementById('trasladoDetailsInput').value.trim();
+      const operator = document.getElementById('operatorSelect').value;
+      const folio = window.selectedFolioTarget;
+
+      if (!catastral || catastral.length !== 16) {
+        alert("La Clave Catastral debe contener exactamente 16 dígitos.");
+        return;
+      }
+      if (!owner) {
+        alert("Por favor ingresa el nombre del nuevo propietario.");
+        return;
+      }
+
+      if (!window.dataStore.traslados) window.dataStore.traslados = {};
+      const nowStr = new Date().toLocaleString('es-MX');
+
+      window.dataStore.traslados[folio] = {
+        catastral: catastral,
+        owner: owner,
+        details: details,
+        operator: operator,
+        timestamp: nowStr
+      };
+
+      window.dataStore.audit.unshift({
+        date: nowStr,
+        section: 'TRASLADOS',
+        folio: folio,
+        action: 'TACHADO',
+        operator: operator,
+        summary: `Clave: ${catastral} | Prop: ${owner}`
+      });
+
+      window.saveStateToFirebase();
+      closeStrikeTrasladoModal();
+    }
+
+    function closeStrikeOficioModal() { document.getElementById('strikeOficioModal').classList.add('hidden'); }
+
+    function confirmStrikeOficio() {
+      const replyTo = document.getElementById('replyToOficioInput').value.trim();
+      const details = document.getElementById('oficioDetailsInput').value.trim();
+      const fileInput = document.getElementById('scannedFileInput');
+      const operator = document.getElementById('operatorSelect').value;
+      const folio = window.selectedFolioTarget;
+
+      const file = fileInput.files[0];
+      const nowStr = new Date().toLocaleString('es-MX');
+
+      if (!window.dataStore.oficios) window.dataStore.oficios = {};
+
+      const saveRecord = (fileBase64 = null, fileName = null) => {
+        window.dataStore.oficios[folio] = {
+          replyTo: replyTo || 'N/A',
+          details: details || 'Sin observaciones',
+          fileData: fileBase64,
+          fileName: fileName,
+          operator: operator,
+          timestamp: nowStr
+        };
+
+        window.dataStore.audit.unshift({
+          date: nowStr,
+          section: 'OFICIOS',
+          folio: folio,
+          action: 'TACHADO',
+          operator: operator,
+          summary: `Responde a: ${replyTo || 'N/A'} ${fileName ? '📎 [Anexo Escaneado]' : ''}`
+        });
+
+        window.saveStateToFirebase();
+        closeStrikeOficioModal();
+      };
+
+      if (file) {
+        if (file.size > 3 * 1024 * 1024) return alert("El archivo no debe superar los 3 MB.");
+        const reader = new FileReader();
+        reader.onload = e => saveRecord(e.target.result, file.name);
+        reader.readAsDataURL(file);
+      } else {
+        saveRecord();
+      }
+    }
+
+    function openViewFolioModal(folioNum) {
+      window.selectedFolioTarget = folioNum;
+      const section = window.currentTab;
+      const data = window.dataStore[section][folioNum] || {};
+
+      document.getElementById('viewFolioTitle').textContent = `${section.toUpperCase()} (${window.selectedYear}) - Folio #${folioNum}`;
+      document.getElementById('unlockPinSection').classList.add('hidden');
+      document.getElementById('adminPinInput').value = '';
+
+      const content = document.getElementById('viewFolioContent');
+
+      if (section === 'traslados') {
+        content.innerHTML = `
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+            <div><strong class="text-slate-500 uppercase text-[10px] block">Clave Catastral:</strong> <span class="font-mono font-bold text-blue-700 text-sm">${data.catastral || 'N/A'}</span></div>
+            <div><strong class="text-slate-500 uppercase text-[10px] block">Nuevo Propietario:</strong> <span class="font-bold text-slate-800">${data.owner || 'N/A'}</span></div>
+            <div><strong class="text-slate-500 uppercase text-[10px] block">Detalles / Notas:</strong> <span>${data.details || 'Sin observaciones'}</span></div>
+            <div class="pt-2 border-t border-slate-200 flex justify-between text-[11px] text-slate-500">
+              <span><strong>Registrado por:</strong> ${data.operator || 'N/A'}</span>
+              <span><strong>Fecha:</strong> ${data.timestamp || ''}</span>
+            </div>
+          </div>
+        `;
+      } else {
+        content.innerHTML = `
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+            <div><strong class="text-slate-500 uppercase text-[10px] block">Responde / En contestación a:</strong> <span class="font-bold text-purple-700">${data.replyTo || 'N/A'}</span></div>
+            <div><strong class="text-slate-500 uppercase text-[10px] block">Asunto / Detalles:</strong> <span>${data.details || 'Sin observaciones'}</span></div>
+            ${data.fileData ? `
+              <div class="pt-2">
+                <strong class="text-slate-500 uppercase text-[10px] block mb-1">Documento Escaneado:</strong>
+                <a href="${data.fileData}" target="_blank" download="${data.fileName || 'Oficio_Escaneado'}" class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-sm transition-colors">
+                  <i class="fa-solid fa-file-pdf"></i> Ver / Descargar (${data.fileName || 'Documento'})
+                </a>
+              </div>
+            ` : '<div class="text-slate-400 italic">No se adjuntó archivo escaneado.</div>'}
+            <div class="pt-2 border-t border-slate-200 flex justify-between text-[11px] text-slate-500">
+              <span><strong>Registrado por:</strong> ${data.operator || 'N/A'}</span>
+              <span><strong>Fecha:</strong> ${data.timestamp || ''}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('viewFolioModal').classList.remove('hidden');
+    }
+
+    function closeViewFolioModal() { document.getElementById('viewFolioModal').classList.add('hidden'); }
+    function showUnlockSection() { document.getElementById('unlockPinSection').classList.remove('hidden'); }
+
+    function confirmUnstrike() {
+      if (document.getElementById('adminPinInput').value !== '1234') return alert('PIN de Administrador incorrecto.');
+
+      const folio = window.selectedFolioTarget;
+      const operator = document.getElementById('operatorSelect').value;
+      const section = window.currentTab;
+
+      delete window.dataStore[section][folio];
+
+      window.dataStore.audit.unshift({
+        date: new Date().toLocaleString('es-MX'),
+        section: section.toUpperCase(),
+        folio: folio,
+        action: 'LIBERADO (DESBLOQUEADO)',
+        operator: operator,
+        summary: 'Folio desbloqueado manualmente con PIN'
+      });
+
+      window.saveStateToFirebase();
+      closeViewFolioModal();
+    }
+
     function openRangeModal() {
       document.getElementById('rangeStartInput').value = 1;
       document.getElementById('rangeEndInput').value = 200;
       document.getElementById('rangeModal').classList.remove('hidden');
     }
-
-    function closeRangeModal() {
-      document.getElementById('rangeModal').classList.add('hidden');
-    }
+    function closeRangeModal() { document.getElementById('rangeModal').classList.add('hidden'); }
 
     function confirmRangeStrike() {
       const start = parseInt(document.getElementById('rangeStartInput').value);
@@ -522,13 +843,16 @@
       }
 
       if (!window.dataStore[section]) window.dataStore[section] = {};
-
       let countAdded = 0;
       const nowStr = new Date().toLocaleString('es-MX');
 
       for (let i = start; i <= end; i++) {
         if (!window.dataStore[section][i]) {
-          window.dataStore[section][i] = { operator: operator, timestamp: nowStr };
+          if (section === 'traslados') {
+            window.dataStore[section][i] = { catastral: 'EN RANGO', owner: 'REGISTRO MASIVO', details: 'Carga inicial en rango', operator: operator, timestamp: nowStr };
+          } else {
+            window.dataStore[section][i] = { replyTo: 'N/A', details: 'Carga inicial en rango', operator: operator, timestamp: nowStr };
+          }
           countAdded++;
         }
       }
@@ -539,7 +863,8 @@
           section: section.toUpperCase(),
           folio: `${start} al ${end}`,
           action: `TACHADO EN RANGO (${countAdded} folios)`,
-          operator: operator
+          operator: operator,
+          summary: `Tachado masivo del folio ${start} al ${end}`
         });
         window.saveStateToFirebase();
       }
@@ -547,7 +872,6 @@
       closeRangeModal();
     }
 
-    // Modo Seleccionar Varios Manual
     function toggleMultiMode() {
       window.isMultiMode = !window.isMultiMode;
       const btn = document.getElementById('btnMultiMode');
@@ -567,9 +891,7 @@
       renderGrid();
     }
 
-    function cancelMultiMode() {
-      toggleMultiMode();
-    }
+    function cancelMultiMode() { toggleMultiMode(); }
 
     function confirmMultiSelection() {
       if (window.multiSelectedSet.size === 0) return;
@@ -582,7 +904,11 @@
 
       const listFolios = Array.from(window.multiSelectedSet).sort((a,b) => a-b);
       listFolios.forEach(folio => {
-        window.dataStore[section][folio] = { operator: operator, timestamp: nowStr };
+        if (section === 'traslados') {
+          window.dataStore[section][folio] = { catastral: 'SELECCION MULTIPLE', owner: 'REGISTRO MULTIPLE', details: '', operator: operator, timestamp: nowStr };
+        } else {
+          window.dataStore[section][folio] = { replyTo: 'N/A', details: 'Registro múltiple', operator: operator, timestamp: nowStr };
+        }
       });
 
       window.dataStore.audit.unshift({
@@ -590,61 +916,14 @@
         section: section.toUpperCase(),
         folio: listFolios.join(', '),
         action: `TACHADO MULTIPLE (${listFolios.length} folios)`,
-        operator: operator
+        operator: operator,
+        summary: `Folios seleccionados manualmente`
       });
 
       window.saveStateToFirebase();
       toggleMultiMode();
     }
 
-    // Modales de confirmación individual
-    function closeStrikeModal() { document.getElementById('strikeModal').classList.add('hidden'); }
-    function closeUnstrikeModal() { document.getElementById('unstrikeModal').classList.add('hidden'); }
-
-    function confirmStrike() {
-      const folio = window.selectedFolioTarget;
-      const operator = document.getElementById('operatorSelect').value;
-      const section = window.currentTab;
-
-      if (!window.dataStore[section]) window.dataStore[section] = {};
-      window.dataStore[section][folio] = { operator: operator, timestamp: new Date().toLocaleString('es-MX') };
-
-      window.dataStore.audit.unshift({
-        date: new Date().toLocaleString('es-MX'),
-        section: section.toUpperCase(),
-        folio: folio,
-        action: 'TACHADO',
-        operator: operator
-      });
-
-      window.saveStateToFirebase();
-      closeStrikeModal();
-    }
-
-    function confirmUnstrike() {
-      if (document.getElementById('adminPinInput').value !== '1234') {
-        alert('PIN incorrecto.');
-        return;
-      }
-      const folio = window.selectedFolioTarget;
-      const operator = document.getElementById('operatorSelect').value;
-      const section = window.currentTab;
-
-      delete window.dataStore[section][folio];
-
-      window.dataStore.audit.unshift({
-        date: new Date().toLocaleString('es-MX'),
-        section: section.toUpperCase(),
-        folio: folio,
-        action: 'LIBERADO (DESBLOQUEADO)',
-        operator: operator
-      });
-
-      window.saveStateToFirebase();
-      closeUnstrikeModal();
-    }
-
-    // Modal Operador
     function openAddOperatorModal() {
       document.getElementById('newOperatorNameInput').value = '';
       document.getElementById('addOperatorModal').classList.remove('hidden');
@@ -654,7 +933,6 @@
     function confirmAddOperator() {
       const name = document.getElementById('newOperatorNameInput').value.trim();
       if (!name) return;
-
       if (!window.dataStore.operators.includes(name)) {
         window.dataStore.operators.push(name);
         window.saveStateToFirebase();
@@ -662,7 +940,6 @@
       closeAddOperatorModal();
     }
 
-    // Modal Expandir Folios
     function openExpandModal() {
       document.getElementById('customLimitInput').value = getMaxLimit() + 100;
       document.getElementById('expandModal').classList.remove('hidden');
@@ -671,10 +948,7 @@
 
     function confirmExpandLimit() {
       const newLimit = parseInt(document.getElementById('customLimitInput').value);
-      if (isNaN(newLimit) || newLimit < 100) {
-        alert('Ingresa un número válido mayor a 100.');
-        return;
-      }
+      if (isNaN(newLimit) || newLimit < 100) return alert('Ingresa un número válido.');
       if (!window.dataStore.settings) window.dataStore.settings = {};
       if (window.currentTab === 'traslados') {
         window.dataStore.settings.maxTraslados = newLimit;
@@ -702,7 +976,7 @@
       const audit = window.dataStore.audit || [];
 
       if (audit.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">No hay registros de movimientos.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 italic">No hay registros de movimientos en el ejercicio ${window.selectedYear}.</td></tr>`;
         return;
       }
 
@@ -711,6 +985,7 @@
           <td class="p-2.5 font-medium">${row.date}</td>
           <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${row.section === 'TRASLADOS' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}">${row.section}</span></td>
           <td class="p-2.5 font-bold text-slate-800">Folio ${row.folio}</td>
+          <td class="p-2.5 text-slate-600 font-mono text-[11px]">${row.summary || 'Sin detalle'}</td>
           <td class="p-2.5"><span class="font-bold ${row.action.includes('LIBERADO') ? 'text-emerald-600' : 'text-rose-600'}">${row.action}</span></td>
           <td class="p-2.5 text-slate-600">${row.operator}</td>
         </tr>
@@ -722,16 +997,16 @@
       if (audit.length === 0) return alert('No hay datos en la bitácora.');
 
       let csv = '\uFEFF';
-      csv += "Fecha y Hora,Sección,Folio,Acción,Operador\n";
+      csv += "Fecha y Hora,Sección,Folio,Detalles / Registro,Acción,Operador\n";
       audit.forEach(row => {
-        csv += `"${row.date}","${row.section}","${row.folio}","${row.action}","${row.operator}"\n`;
+        csv += `"${row.date}","${row.section}","${row.folio}","${(row.summary || '').replace(/"/g, '""')}","${row.action}","${row.operator}"\n`;
       });
 
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `Bitacora_Control_Folios_${new Date().toISOString().slice(0,10)}.csv`;
+      link.download = `Bitacora_Control_Folios_${window.selectedYear}_${new Date().toISOString().slice(0,10)}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
