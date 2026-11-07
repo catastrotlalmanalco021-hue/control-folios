@@ -582,4 +582,444 @@
 
         const isSelectedMulti = window.multiSelectedSet.has(i);
 
-        const box = document.createElement
+        const box = document.createElement('div');
+        box.id = `folio-box-${i}`;
+        
+        let classes = 'folio-box h-10 border rounded-lg flex items-center justify-center font-bold text-sm cursor-pointer ';
+        if (isStriked) {
+          classes += 'striked border-rose-300';
+        } else if (isSelectedMulti) {
+          classes += 'selected-multi';
+        } else {
+          classes += 'bg-emerald-50/60 hover:bg-emerald-100 text-emerald-800 border-emerald-200 hover:border-emerald-400';
+        }
+
+        box.className = classes;
+        box.onclick = () => handleFolioClick(i, isStriked);
+        box.innerHTML = `<span class="num">${i}</span>`;
+        gridContainer.appendChild(box);
+      }
+
+      const availableCount = maxLimit - strikedCount;
+      const progress = ((strikedCount / maxLimit) * 100).toFixed(1);
+
+      document.getElementById('statTotal').textContent = maxLimit;
+      document.getElementById('statAvailable').textContent = availableCount;
+      document.getElementById('statStriked').textContent = strikedCount;
+      document.getElementById('statProgress').textContent = `${progress}%`;
+    }
+
+    function handleFolioClick(folioNum, isStriked) {
+      if (window.isMultiMode) {
+        if (isStriked) return;
+        if (window.multiSelectedSet.has(folioNum)) {
+          window.multiSelectedSet.delete(folioNum);
+        } else {
+          window.multiSelectedSet.add(folioNum);
+        }
+        document.getElementById('multiCountText').textContent = window.multiSelectedSet.size;
+        renderGrid();
+        return;
+      }
+
+      window.selectedFolioTarget = folioNum;
+
+      if (!isStriked) {
+        if (window.currentTab === 'traslados') {
+          document.getElementById('trasladoFolioNum').textContent = `Folio #${folioNum}`;
+          document.getElementById('trasladoYearText').textContent = window.selectedYear;
+          document.getElementById('catastralInput').value = '';
+          document.getElementById('ownerInput').value = '';
+          document.getElementById('trasladoDetailsInput').value = '';
+          document.getElementById('strikeTrasladoModal').classList.remove('hidden');
+        } else {
+          document.getElementById('oficioFolioNum').textContent = `Folio #${folioNum}`;
+          document.getElementById('oficioYearText').textContent = window.selectedYear;
+          document.getElementById('replyToOficioInput').value = '';
+          document.getElementById('oficioDetailsInput').value = '';
+          document.getElementById('recipientInput').value = '';
+          document.getElementById('scannedFileInput').value = '';
+          document.getElementById('strikeOficioModal').classList.remove('hidden');
+        }
+      } else {
+        openViewFolioModal(folioNum);
+      }
+    }
+
+    function switchTab(tab) {
+      window.currentTab = tab;
+      window.multiSelectedSet.clear();
+      if (window.isMultiMode) toggleMultiMode();
+
+      const tabT = document.getElementById('tabTraslados');
+      const tabO = document.getElementById('tabOficios');
+      const title = document.getElementById('sectionTitle');
+
+      if (tab === 'traslados') {
+        tabT.className = "px-5 py-2 rounded-md font-semibold text-sm transition-all bg-white text-blue-700 shadow-sm border border-slate-200";
+        tabO.className = "px-5 py-2 rounded-md font-semibold text-sm transition-all text-slate-600 hover:text-slate-900";
+        title.innerHTML = `<i class="fa-solid fa-table-cells text-blue-600"></i> Matriz Digital de Traslados de Dominio (${window.selectedYear})`;
+      } else {
+        tabO.className = "px-5 py-2 rounded-md font-semibold text-sm transition-all bg-white text-blue-700 shadow-sm border border-slate-200";
+        tabT.className = "px-5 py-2 rounded-md font-semibold text-sm transition-all text-slate-600 hover:text-slate-900";
+        title.innerHTML = `<i class="fa-solid fa-table-cells text-blue-600"></i> Matriz Digital de Oficios (${window.selectedYear})`;
+      }
+
+      renderGrid();
+    }
+
+    function closeStrikeTrasladoModal() { document.getElementById('strikeTrasladoModal').classList.add('hidden'); }
+
+    function confirmStrikeTraslado() {
+      const catastral = document.getElementById('catastralInput').value.trim();
+      const owner = document.getElementById('ownerInput').value.trim();
+      const details = document.getElementById('trasladoDetailsInput').value.trim();
+      const operator = document.getElementById('operatorSelect').value;
+      const folio = window.selectedFolioTarget;
+
+      if (!catastral || catastral.length !== 16) {
+        alert("La Clave Catastral debe contener exactamente 16 dígitos.");
+        return;
+      }
+      if (!owner) {
+        alert("Por favor ingresa el nombre del nuevo propietario.");
+        return;
+      }
+
+      if (!window.dataStore.traslados) window.dataStore.traslados = {};
+      const nowStr = new Date().toLocaleString('es-MX');
+
+      window.dataStore.traslados[folio] = {
+        catastral: catastral,
+        owner: owner,
+        details: details,
+        operator: operator,
+        timestamp: nowStr
+      };
+
+      window.dataStore.audit.unshift({
+        date: nowStr,
+        section: 'TRASLADOS',
+        folio: folio,
+        action: 'TACHADO',
+        operator: operator,
+        summary: `Clave: ${catastral} | Prop: ${owner}`
+      });
+
+      window.saveStateToFirebase();
+      closeStrikeTrasladoModal();
+    }
+
+    function closeStrikeOficioModal() { document.getElementById('strikeOficioModal').classList.add('hidden'); }
+
+    function confirmStrikeOficio() {
+      const replyTo = document.getElementById('replyToOficioInput').value.trim();
+      const details = document.getElementById('oficioDetailsInput').value.trim();
+      const recipient = document.getElementById('recipientInput').value.trim();
+      const fileInput = document.getElementById('scannedFileInput');
+      const operator = document.getElementById('operatorSelect').value;
+      const folio = window.selectedFolioTarget;
+
+      const file = fileInput.files[0];
+      const nowStr = new Date().toLocaleString('es-MX');
+
+      if (!window.dataStore.oficios) window.dataStore.oficios = {};
+
+      const saveRecord = (fileBase64 = null, fileName = null) => {
+        window.dataStore.oficios[folio] = {
+          replyTo: replyTo || 'N/A',
+          details: details || 'Sin observaciones',
+          recipient: recipient || 'N/A',
+          fileData: fileBase64,
+          fileName: fileName,
+          operator: operator,
+          timestamp: nowStr
+        };
+
+        window.dataStore.audit.unshift({
+          date: nowStr,
+          section: 'OFICIOS',
+          folio: folio,
+          action: 'TACHADO',
+          operator: operator,
+          summary: `Responde a: ${replyTo || 'N/A'} | Dirigido a: ${recipient || 'N/A'} ${fileName ? '📎 [Anexo]' : ''}`
+        });
+
+        window.saveStateToFirebase();
+        closeStrikeOficioModal();
+      };
+
+      if (file) {
+        if (file.size > 3 * 1024 * 1024) return alert("El archivo no debe superar los 3 MB.");
+        const reader = new FileReader();
+        reader.onload = e => saveRecord(e.target.result, file.name);
+        reader.readAsDataURL(file);
+      } else {
+        saveRecord();
+      }
+    }
+
+    function openViewFolioModal(folioNum) {
+      window.selectedFolioTarget = folioNum;
+      const section = window.currentTab;
+      const data = window.dataStore[section][folioNum] || {};
+
+      document.getElementById('viewFolioTitle').textContent = `${section.toUpperCase()} (${window.selectedYear}) - Folio #${folioNum}`;
+      document.getElementById('unlockPinSection').classList.add('hidden');
+      document.getElementById('adminPinInput').value = '';
+
+      const content = document.getElementById('viewFolioContent');
+
+      if (section === 'traslados') {
+        content.innerHTML = `
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+            <div><strong class="text-slate-500 uppercase text-[10px] block">Clave Catastral:</strong> <span class="font-mono font-bold text-blue-700 text-sm">${data.catastral || 'N/A'}</span></div>
+            <div><strong class="text-slate-500 uppercase text-[10px] block">Nuevo Propietario:</strong> <span class="font-bold text-slate-800">${data.owner || 'N/A'}</span></div>
+            <div><strong class="text-slate-500 uppercase text-[10px] block">Detalles / Notas:</strong> <span>${data.details || 'Sin observaciones'}</span></div>
+            <div class="pt-2 border-t border-slate-200 flex justify-between text-[11px] text-slate-500">
+              <span><strong>Registrado por:</strong> ${data.operator || 'N/A'}</span>
+              <span><strong>Fecha:</strong> ${data.timestamp || ''}</span>
+            </div>
+          </div>
+        `;
+      } else {
+        content.innerHTML = `
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+            <div><strong class="text-slate-500 uppercase text-[10px] block">Responde / En contestación a:</strong> <span class="font-bold text-purple-700">${data.replyTo || 'N/A'}</span></div>
+            <div><strong class="text-slate-500 uppercase text-[10px] block">Asunto / Detalles:</strong> <span>${data.details || 'Sin observaciones'}</span></div>
+            <div><strong class="text-slate-500 uppercase text-[10px] block">Dirigido a:</strong> <span class="font-bold text-slate-800">${data.recipient || 'N/A'}</span></div>
+            ${data.fileData ? `
+              <div class="pt-2">
+                <strong class="text-slate-500 uppercase text-[10px] block mb-1">Documento Escaneado:</strong>
+                <a href="${data.fileData}" target="_blank" download="${data.fileName || 'Oficio_Escaneado'}" class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-sm transition-colors">
+                  <i class="fa-solid fa-file-pdf"></i> Ver / Descargar (${data.fileName || 'Documento'})
+                </a>
+              </div>
+            ` : '<div class="text-slate-400 italic">No se adjuntó archivo escaneado.</div>'}
+            <div class="pt-2 border-t border-slate-200 flex justify-between text-[11px] text-slate-500">
+              <span><strong>Registrado por:</strong> ${data.operator || 'N/A'}</span>
+              <span><strong>Fecha:</strong> ${data.timestamp || ''}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('viewFolioModal').classList.remove('hidden');
+    }
+
+    function closeViewFolioModal() { document.getElementById('viewFolioModal').classList.add('hidden'); }
+    function showUnlockSection() { document.getElementById('unlockPinSection').classList.remove('hidden'); }
+
+    function confirmUnstrike() {
+      if (document.getElementById('adminPinInput').value !== '1234') return alert('PIN de Administrador incorrecto.');
+
+      const folio = window.selectedFolioTarget;
+      const operator = document.getElementById('operatorSelect').value;
+      const section = window.currentTab;
+
+      delete window.dataStore[section][folio];
+
+      window.dataStore.audit.unshift({
+        date: new Date().toLocaleString('es-MX'),
+        section: section.toUpperCase(),
+        folio: folio,
+        action: 'LIBERADO (DESBLOQUEADO)',
+        operator: operator,
+        summary: 'Folio desbloqueado manualmente con PIN'
+      });
+
+      window.saveStateToFirebase();
+      closeViewFolioModal();
+    }
+
+    function openRangeModal() {
+      document.getElementById('rangeStartInput').value = 1;
+      document.getElementById('rangeEndInput').value = 200;
+      document.getElementById('rangeModal').classList.remove('hidden');
+    }
+    function closeRangeModal() { document.getElementById('rangeModal').classList.add('hidden'); }
+
+    function confirmRangeStrike() {
+      const start = parseInt(document.getElementById('rangeStartInput').value);
+      const end = parseInt(document.getElementById('rangeEndInput').value);
+      const operator = document.getElementById('operatorSelect').value;
+      const section = window.currentTab;
+      const maxLimit = getMaxLimit();
+
+      if (isNaN(start) || isNaN(end) || start < 1 || end > maxLimit || start > end) {
+        alert(`Ingresa un rango válido entre 1 y ${maxLimit}.`);
+        return;
+      }
+
+      if (!window.dataStore[section]) window.dataStore[section] = {};
+      let countAdded = 0;
+      const nowStr = new Date().toLocaleString('es-MX');
+
+      for (let i = start; i <= end; i++) {
+        if (!window.dataStore[section][i]) {
+          if (section === 'traslados') {
+            window.dataStore[section][i] = { catastral: 'EN RANGO', owner: 'REGISTRO MASIVO', details: 'Carga inicial en rango', operator: operator, timestamp: nowStr };
+          } else {
+            window.dataStore[section][i] = { replyTo: 'N/A', details: 'Carga inicial en rango', recipient: 'N/A', operator: operator, timestamp: nowStr };
+          }
+          countAdded++;
+        }
+      }
+
+      if (countAdded > 0) {
+        window.dataStore.audit.unshift({
+          date: nowStr,
+          section: section.toUpperCase(),
+          folio: `${start} al ${end}`,
+          action: `TACHADO EN RANGO (${countAdded} folios)`,
+          operator: operator,
+          summary: `Tachado masivo del folio ${start} al ${end}`
+        });
+        window.saveStateToFirebase();
+      }
+
+      closeRangeModal();
+    }
+
+    function toggleMultiMode() {
+      window.isMultiMode = !window.isMultiMode;
+      const btn = document.getElementById('btnMultiMode');
+      const text = document.getElementById('btnMultiText');
+      const bar = document.getElementById('multiFloatingBar');
+
+      if (window.isMultiMode) {
+        btn.className = "bg-blue-600 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 ring-2 ring-blue-400";
+        text.textContent = "Cancelando Selección...";
+        bar.classList.remove('hidden');
+      } else {
+        btn.className = "bg-slate-700 hover:bg-slate-800 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-1.5";
+        text.textContent = "Modo Seleccionar Varios";
+        bar.classList.add('hidden');
+        window.multiSelectedSet.clear();
+      }
+      renderGrid();
+    }
+
+    function cancelMultiMode() { toggleMultiMode(); }
+
+    function confirmMultiSelection() {
+      if (window.multiSelectedSet.size === 0) return;
+
+      const operator = document.getElementById('operatorSelect').value;
+      const section = window.currentTab;
+      const nowStr = new Date().toLocaleString('es-MX');
+
+      if (!window.dataStore[section]) window.dataStore[section] = {};
+
+      const listFolios = Array.from(window.multiSelectedSet).sort((a,b) => a-b);
+      listFolios.forEach(folio => {
+        if (section === 'traslados') {
+          window.dataStore[section][folio] = { catastral: 'SELECCION MULTIPLE', owner: 'REGISTRO MULTIPLE', details: '', operator: operator, timestamp: nowStr };
+        } else {
+          window.dataStore[section][folio] = { replyTo: 'N/A', details: 'Registro múltiple', recipient: 'N/A', operator: operator, timestamp: nowStr };
+        }
+      });
+
+      window.dataStore.audit.unshift({
+        date: nowStr,
+        section: section.toUpperCase(),
+        folio: listFolios.join(', '),
+        action: `TACHADO MULTIPLE (${listFolios.length} folios)`,
+        operator: operator,
+        summary: `Folios seleccionados manualmente`
+      });
+
+      window.saveStateToFirebase();
+      toggleMultiMode();
+    }
+
+    function openAddOperatorModal() {
+      document.getElementById('newOperatorNameInput').value = '';
+      document.getElementById('addOperatorModal').classList.remove('hidden');
+    }
+    function closeAddOperatorModal() { document.getElementById('addOperatorModal').classList.add('hidden'); }
+
+    function confirmAddOperator() {
+      const name = document.getElementById('newOperatorNameInput').value.trim();
+      if (!name) return;
+      if (!window.dataStore.operators.includes(name)) {
+        window.dataStore.operators.push(name);
+        window.saveStateToFirebase();
+      }
+      closeAddOperatorModal();
+    }
+
+    function openExpandModal() {
+      document.getElementById('customLimitInput').value = getMaxLimit() + 100;
+      document.getElementById('expandModal').classList.remove('hidden');
+    }
+    function closeExpandModal() { document.getElementById('expandModal').classList.add('hidden'); }
+
+    function confirmExpandLimit() {
+      const newLimit = parseInt(document.getElementById('customLimitInput').value);
+      if (isNaN(newLimit) || newLimit < 100) return alert('Ingresa un número válido.');
+      if (!window.dataStore.settings) window.dataStore.settings = {};
+      if (window.currentTab === 'traslados') {
+        window.dataStore.settings.maxTraslados = newLimit;
+      } else {
+        window.dataStore.settings.maxOficios = newLimit;
+      }
+      window.saveStateToFirebase();
+      closeExpandModal();
+    }
+
+    function searchFolio() {
+      const query = document.getElementById('searchInput').value;
+      if (!query) return;
+
+      const targetBox = document.getElementById(`folio-box-${query}`);
+      if (targetBox) {
+        targetBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetBox.classList.add('ring-4', 'ring-blue-500');
+        setTimeout(() => targetBox.classList.remove('ring-4', 'ring-blue-500'), 2000);
+      }
+    }
+
+    function renderAudit() {
+      const tbody = document.getElementById('auditTableBody');
+      const audit = window.dataStore.audit || [];
+
+      if (audit.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 italic">No hay registros de movimientos en el ejercicio ${window.selectedYear}.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = audit.slice(0, 50).map(row => `
+        <tr class="hover:bg-slate-50 border-b border-slate-100">
+          <td class="p-2.5 font-medium">${row.date}</td>
+          <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${row.section === 'TRASLADOS' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}">${row.section}</span></td>
+          <td class="p-2.5 font-bold text-slate-800">Folio ${row.folio}</td>
+          <td class="p-2.5 text-slate-600 font-mono text-[11px]">${row.summary || 'Sin detalle'}</td>
+          <td class="p-2.5"><span class="font-bold ${row.action.includes('LIBERADO') ? 'text-emerald-600' : 'text-rose-600'}">${row.action}</span></td>
+          <td class="p-2.5 text-slate-600">${row.operator}</td>
+        </tr>
+      `).join('');
+    }
+
+    function exportAuditCSV() {
+      const audit = window.dataStore.audit || [];
+      if (audit.length === 0) return alert('No hay datos en la bitácora.');
+
+      let csv = '\uFEFF';
+      csv += "Fecha y Hora,Sección,Folio,Detalles / Registro,Acción,Operador\n";
+      audit.forEach(row => {
+        csv += `"${row.date}","${row.section}","${row.folio}","${(row.summary || '').replace(/"/g, '""')}","${row.action}","${row.operator}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Bitacora_Control_Folios_${window.selectedYear}_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
